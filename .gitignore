@@ -1,1 +1,5 @@
- 
+*.o
+build-*/
+*.pro.user
+.directory
+.sconsign.dblite
