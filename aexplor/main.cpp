@@ -13,6 +13,8 @@ int main(int argc, char * argv[])
 	QApplication app(argc, argv);
 
 	directory_widget w(root);
+	w.setWindowTitle("Andorid Explorer");
+	w.resize(400, 600);
 	w.show();
 
 	return app.exec();

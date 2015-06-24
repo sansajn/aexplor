@@ -11,7 +11,7 @@ directory_widget::directory_widget(string const & root, QWidget * parent)
 	QVBoxLayout * layout = new QVBoxLayout(this);  // TODO: ako je to zo zivonostou ?
 
 	_view = new directory_view(root);
-	_path = new QLabel();
+	_path = new QLabel(QString::fromUtf8(root.c_str()));
 
 	layout->addWidget(_path);
 	layout->addWidget(_view);

@@ -11,10 +11,10 @@ static string ls_file(string const & path);
 static bool directory(fs::path const & p);
 
 directory_view::directory_view(std::string const & root)
-	: QListView(nullptr), _path(root), _root(root)
+	: QListView(nullptr), _root(root)
 {
 	setModel(&_model);
-	update_view();
+	dir_change(_root);
 }
 
 void directory_view::keyPressEvent(QKeyEvent * event)
