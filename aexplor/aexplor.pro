@@ -4,6 +4,9 @@
 #
 #-------------------------------------------------
 
+QMAKE_CFLAGS += -g
+QMAKE_CXXFLAGS += -std=c++11 -Wall
+
 QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -12,6 +15,10 @@ TARGET = aexplor
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    directory_view.cpp
 
-HEADERS  +=
+HEADERS  += \
+    directory_view.hpp
+
+LIBS += -lboost_system -lboost_filesystem
