@@ -1,7 +1,7 @@
 #include <string>
 #include <cassert>
 #include <QApplication>
-#include "directory_view.hpp"
+#include "directory_widget.hpp"
 
 using std::string;
 
@@ -12,8 +12,8 @@ int main(int argc, char * argv[])
 {
 	QApplication app(argc, argv);
 
-	directory_view view(root);
-	view.show();
+	directory_widget w(root);
+	w.show();
 
 	return app.exec();
 }

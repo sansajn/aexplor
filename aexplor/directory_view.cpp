@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <QVBoxLayout>
 
 using std::string;
 
@@ -9,8 +10,8 @@ static void ls(string const & path, QStringList & result);
 static string ls_file(string const & path);
 static bool directory(fs::path const & p);
 
-directory_view::directory_view(std::string const & path)
-	: QListView(nullptr), _path(path)
+directory_view::directory_view(std::string const & root)
+	: QListView(nullptr), _path(root), _root(root)
 {
 	setModel(&_model);
 	update_view();
@@ -19,28 +20,45 @@ directory_view::directory_view(std::string const & path)
 void directory_view::keyPressEvent(QKeyEvent * event)
 {
 	if (event->key() == Qt::Key_Return)
-		dir_change();
+		on_return();
+	else if (event->key() == Qt::Key_Backspace)
+		on_backspace();
 	else
 		QListView::keyPressEvent(event);
 }
 
-void directory_view::dir_up()
-{
-	_path = _path.parent_path();
-	update_view();
-}
-
-void directory_view::dir_change()
+void directory_view::on_return()
 {
 	QString item = model()->data(currentIndex()).toString();
 
-	fs::path p(_path);
-	p /= item.toStdString();
-	if (directory(p))
+	if (item == "..")
+		dir_up();
+	else
 	{
-		_path = p;
-		update_view();
+		fs::path p(_path);
+		p /= item.toStdString();  // TODO: c_str()
+
+		if (directory(p))
+			dir_change(p);
 	}
+}
+
+void directory_view::on_backspace()
+{
+	dir_up();
+}
+
+void directory_view::dir_up()
+{
+	if (_path.compare(_root) != 0)  // nie som v roote
+		dir_change(_path.parent_path());
+}
+
+void directory_view::dir_change(fs::path const & p)
+{
+	_path = p;
+	update_view();
+	emit directory_changed(QString::fromUtf8(_path.c_str()));
 }
 
 void directory_view::update_view()
