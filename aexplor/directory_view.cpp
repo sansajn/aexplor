@@ -6,6 +6,8 @@
 using std::string;
 
 static void ls(string const & path, QStringList & result);
+static string ls_file(string const & path);
+static bool directory(fs::path const & p);
 
 directory_view::directory_view(std::string const & path)
 	: QListView(nullptr), _path(path)
@@ -26,30 +28,6 @@ void directory_view::dir_up()
 {
 	_path = _path.parent_path();
 	update_view();
-}
-
-string ls_file(string const & path)
-{
-	string cmd = string("ls -Fd ") + path;
-	FILE * pin = popen(cmd.c_str(), "r");
-	if (!pin)
-		return string();
-
-	char line[1024];
-	char * rv = fgets(line, sizeof line, pin);
-
-	pclose(pin);
-
-	if (!rv)
-		return string();
-
-	return string(line, line+strlen(line)-1);  // ignore last '\n'
-}
-
-static bool directory(fs::path const & p)
-{
-	string line = ls_file(p.string());
-	return line.back() == '/';
 }
 
 void directory_view::dir_change()
@@ -75,7 +53,7 @@ void directory_view::update_view()
 
 void ls(string const & path, QStringList & result)
 {
-	string cmd = string("ls ") + path;
+	string cmd = string("ls --group-directories-first ") + path;
 	FILE * pin = popen(cmd.c_str(), "r");
 	if (!pin)
 		return;
@@ -91,4 +69,28 @@ void ls(string const & path, QStringList & result)
 	}
 
 	pclose(pin);
+}
+
+string ls_file(string const & path)
+{
+	string cmd = string("ls -Fd ") + path;
+	FILE * pin = popen(cmd.c_str(), "r");
+	if (!pin)
+		return string();
+
+	char line[1024];
+	char * rv = fgets(line, sizeof line, pin);
+
+	pclose(pin);
+
+	if (!rv)
+		return string();
+
+	return string(line, line+strlen(line)-1);  // ignore last '\n'
+}
+
+bool directory(fs::path const & p)
+{
+	string line = ls_file(p.string());
+	return line.back() == '/';
 }
