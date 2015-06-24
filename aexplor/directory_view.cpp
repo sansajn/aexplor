@@ -1,17 +1,15 @@
 #include "directory_view.hpp"
 #include <cstdio>
+#include <boost/algorithm/string/trim.hpp>
 #include <QMessageBox>
 #include <QKeyEvent>
 #include <QVBoxLayout>
 
 using std::string;
+using boost::trim;
 
-static void ls(string const & path, QStringList & result);
-static string ls_file(string const & path);
-static bool directory(fs::path const & p);
-
-directory_view::directory_view(std::string const & root)
-	: QListView(nullptr), _root(root)
+directory_view::directory_view(std::string const & root, std::string const & remote)
+	: QListView(nullptr), _root(root), _remote(remote)
 {
 	setModel(&_model);
 	dir_change(_root);
@@ -69,29 +67,27 @@ void directory_view::update_view()
 	_model.setStringList(files);
 }
 
-void ls(string const & path, QStringList & result)
+void directory_view::ls(string const & path, QStringList & result) const
 {
-	string cmd = string("ls --group-directories-first ") + path;
+	string cmd = _remote + string(" ls ") + path;
 	FILE * pin = popen(cmd.c_str(), "r");
 	if (!pin)
 		return;
 
-	char line[1024];
-	while (fgets(line, sizeof line, pin))
+	char buf[1024];
+	while (fgets(buf, sizeof buf, pin))
 	{
-		int len = strlen(line);
-		if (line[len-1] == '\n')
-			result << QString::fromUtf8(line, len-1);
-		else
-			result << line;
+		string line(buf);
+		trim(line);
+		result << QString::fromUtf8(line.c_str());
 	}
 
 	pclose(pin);
 }
 
-string ls_file(string const & path)
+string directory_view::ls_file(string const & path) const
 {
-	string cmd = string("ls -Fd ") + path;
+	string cmd = _remote + string(" ls -Fd ") + path;
 	FILE * pin = popen(cmd.c_str(), "r");
 	if (!pin)
 		return string();
@@ -107,8 +103,8 @@ string ls_file(string const & path)
 	return string(line, line+strlen(line)-1);  // ignore last '\n'
 }
 
-bool directory(fs::path const & p)
+bool directory_view::directory(fs::path const & p) const
 {
 	string line = ls_file(p.string());
-	return line.back() == '/';
+	return line[0] == 'd';
 }

@@ -5,7 +5,7 @@
 
 using std::string;
 
-string const root = "~";
+string const root = "/";
 
 
 int main(int argc, char * argv[])

@@ -5,12 +5,14 @@
 
 using std::string;
 
+string const adb_path = "/home/ja/opt/android-sdk-linux/platform-tools";
+
 directory_widget::directory_widget(string const & root, QWidget * parent)
 	: QWidget(parent)
 {
 	QVBoxLayout * layout = new QVBoxLayout(this);  // TODO: ako je to zo zivonostou ?
 
-	_view = new directory_view(root);
+	_view = new directory_view(root, adb_path + "/adb shell");
 	_path = new QLabel(QString::fromUtf8(root.c_str()));
 
 	layout->addWidget(_path);
