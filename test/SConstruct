@@ -1,4 +1,5 @@
 env = Environment()
-env.Append(CCFLAGS=['-Wall'], CXXFLAGS=['-std=c++11'])
+env.Append(CCFLAGS=['-Wall', '-g'], CXXFLAGS=['-std=c++11'])
 env.Program('test_runcmd.cpp')
 env.Program('test_output_hijack.cpp')
+env.Program('test_ls.cpp')
