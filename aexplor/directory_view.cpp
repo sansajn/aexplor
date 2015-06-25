@@ -59,6 +59,8 @@ void directory_view::keyPressEvent(QKeyEvent * event)
 		dir_enter();
 	else if (event->key() == Qt::Key_Backspace)
 		dir_up();
+	else if (event->key() == Qt::Key_Delete)
+		dir_delete();
 	else
 		QListView::keyPressEvent(event);
 }
@@ -77,6 +79,27 @@ void directory_view::dir_enter()
 		if (directory(p) || directory_link(p))
 			dir_change(p);
 	}
+}
+
+void directory_view::dir_delete()
+{
+	QString item = model()->data(currentIndex()).toString();
+
+	if (item == "..")
+		return;
+
+	fs::path p(_path);
+	p /= item.toStdString();
+
+	string cmd;
+
+	if (directory(p))
+		cmd = string("/home/ja/opt/android-sdk-linux/platform-tools/adb shell rm ") + p.string();
+	else
+		cmd = string("/home/ja/opt/android-sdk-linux/platform-tools/adb shell rm -rf ") + p.string();
+
+	system(cmd.c_str());  // TODO: delete in thread
+	update_view();
 }
 
 void directory_view::dir_up()

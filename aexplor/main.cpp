@@ -8,9 +8,8 @@ using std::string;
 string const root = "/";
 
 // TODO:
-// * kopirovanie do pc
-// * delete <del>
 // * mkdir <f7>
+// * kopirovanie do pc
 // * rename <f2>
 // * su mode
 // * remount (/system)
@@ -20,6 +19,8 @@ string const root = "/";
 // * view file <f3>
 // * edit file <f4>
 // * d&d copy, move context menu
+// * file operations in thread
+// * ok - delete <del>
 // * ok - kopirovanie s pc
 // * ok - podpora pre linky (hlavne adresarov)
 

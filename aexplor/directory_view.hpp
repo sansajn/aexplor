@@ -25,6 +25,7 @@ protected:
 private:
 	void dir_up();
 	void dir_enter();
+	void dir_delete();
 	void dir_rename();
 	void dir_change(fs::path const & p);
 	void update_view();
