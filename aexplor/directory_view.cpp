@@ -1,31 +1,69 @@
 #include "directory_view.hpp"
+#include <vector>
 #include <cstdio>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <QMessageBox>
 #include <QKeyEvent>
-#include <QVBoxLayout>
+#include <QUrl>
+#include <QMimeData>
 
+using std::vector;
 using std::string;
 using boost::trim;
+using boost::starts_with;
+
+static void copy_to_device(vector<string> const & files, string const & dst);
 
 directory_view::directory_view(std::string const & root, std::string const & remote)
 	: QListView(nullptr), _root(root), _remote(remote)
 {
 	setModel(&_model);
 	dir_change(_root);
+	setAcceptDrops(true);  // drag&drop support
+}
+
+void directory_view::dragEnterEvent(QDragEnterEvent * event)
+{
+	event->acceptProposedAction();
+}
+
+void directory_view::dragMoveEvent(QDragMoveEvent * event)
+{
+	event->acceptProposedAction();
+}
+
+void directory_view::dropEvent(QDropEvent * event)
+{
+	QMimeData const * mime = event->mimeData();
+
+	if (mime && mime->hasUrls())
+	{
+		vector<string> files;
+		for (QUrl & url : mime->urls())
+			files.push_back(url.toLocalFile().toStdString());
+
+		if (!files.empty())
+		{
+			copy_to_device(files, _path.c_str());
+			update_view();
+		}
+	}
+
+	assert(mime && "unknown mime data");
 }
 
 void directory_view::keyPressEvent(QKeyEvent * event)
 {
 	if (event->key() == Qt::Key_Return)
-		on_return();
+		dir_enter();
 	else if (event->key() == Qt::Key_Backspace)
-		on_backspace();
+		dir_up();
 	else
 		QListView::keyPressEvent(event);
 }
 
-void directory_view::on_return()
+void directory_view::dir_enter()
 {
 	QString item = model()->data(currentIndex()).toString();
 
@@ -36,14 +74,9 @@ void directory_view::on_return()
 		fs::path p(_path);
 		p /= item.toStdString();  // TODO: c_str()
 
-		if (directory(p))
+		if (directory(p) || directory_link(p))
 			dir_change(p);
 	}
-}
-
-void directory_view::on_backspace()
-{
-	dir_up();
 }
 
 void directory_view::dir_up()
@@ -107,4 +140,21 @@ bool directory_view::directory(fs::path const & p) const
 {
 	string line = ls_file(p.string());
 	return line[0] == 'd';
+}
+
+bool directory_view::directory_link(fs::path const & p) const
+{
+	return starts_with(ls_file(p.string()), "ld");
+}
+
+void copy_to_device(vector<string> const & files, string const & dst)
+{
+	// TODO: resolve adb path
+	// TODO: use thread to push
+	// TODO: vysualize using -p flag
+	for (string const & file : files)
+	{
+		string cmd = string("/home/ja/opt/android-sdk-linux/platform-tools/adb push ") + file + string(" ") + dst;
+		system(cmd.c_str());
+	}
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <QWidget>
 #include <QListView>
 #include <QStringListModel>
 #include <boost/filesystem/path.hpp>
@@ -18,15 +17,19 @@ signals:
 	void directory_changed(QString const & path);
 
 protected:
-	void keyPressEvent(QKeyEvent * event);
+	void dropEvent(QDropEvent * event) override;
+	void dragEnterEvent(QDragEnterEvent * event) override;
+	void dragMoveEvent(QDragMoveEvent * event) override;
+	void keyPressEvent(QKeyEvent * event) override;
 
 private:
 	void dir_up();
+	void dir_enter();
+	void dir_rename();
 	void dir_change(fs::path const & p);
 	void update_view();
-	void on_return();
-	void on_backspace();
 	bool directory(fs::path const & p) const;
+	bool directory_link(fs::path const & p) const;
 	std::string ls_file(std::string const & path) const;
 	void ls(std::string const & path, QStringList & result) const;
 
