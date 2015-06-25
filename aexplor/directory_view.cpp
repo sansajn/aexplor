@@ -7,6 +7,7 @@
 #include <QKeyEvent>
 #include <QUrl>
 #include <QMimeData>
+#include "mkdir_dialog.hpp"
 
 using std::vector;
 using std::string;
@@ -61,6 +62,8 @@ void directory_view::keyPressEvent(QKeyEvent * event)
 		dir_up();
 	else if (event->key() == Qt::Key_Delete)
 		dir_delete();
+	else if (event->key() == Qt::Key_F7)
+		dir_make();
 	else
 		QListView::keyPressEvent(event);
 }
@@ -93,13 +96,26 @@ void directory_view::dir_delete()
 
 	string cmd;
 
-	if (directory(p))
+	if (!directory(p))
 		cmd = string("/home/ja/opt/android-sdk-linux/platform-tools/adb shell rm ") + p.string();
 	else
 		cmd = string("/home/ja/opt/android-sdk-linux/platform-tools/adb shell rm -rf ") + p.string();
 
 	system(cmd.c_str());  // TODO: delete in thread
 	update_view();
+}
+
+void directory_view::dir_make()
+{
+	mkdir_dialog d(_path.string(), this);
+	if (d.exec() == QDialog::Accepted)
+	{
+		QString dir = d.result();
+		fs::path p = _path;
+		p /= dir.toStdString();
+		mkdir(p.string());
+		update_view();
+	}
 }
 
 void directory_view::dir_up()
@@ -157,6 +173,12 @@ string directory_view::ls_file(string const & path) const
 		return string();
 
 	return string(line, line+strlen(line)-1);  // ignore last '\n'
+}
+
+void directory_view::mkdir(std::string const & path) const
+{
+	string cmd = string("/home/ja/opt/android-sdk-linux/platform-tools/adb shell mkdir ") + path;
+	system(cmd.c_str());
 }
 
 bool directory_view::directory(fs::path const & p) const

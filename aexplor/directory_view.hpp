@@ -26,6 +26,7 @@ private:
 	void dir_up();
 	void dir_enter();
 	void dir_delete();
+	void dir_make();
 	void dir_rename();
 	void dir_change(fs::path const & p);
 	void update_view();
@@ -33,6 +34,7 @@ private:
 	bool directory_link(fs::path const & p) const;
 	std::string ls_file(std::string const & path) const;
 	void ls(std::string const & path, QStringList & result) const;
+	void mkdir(std::string const & path) const;
 
 	fs::path _path;
 	std::string _root;

@@ -17,10 +17,12 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     directory_view.cpp \
-    directory_widget.cpp
+    directory_widget.cpp \
+    mkdir_dialog.cpp
 
 HEADERS  += \
     directory_view.hpp \
-    directory_widget.hpp
+    directory_widget.hpp \
+    mkdir_dialog.hpp
 
 LIBS += -lboost_system -lboost_filesystem
