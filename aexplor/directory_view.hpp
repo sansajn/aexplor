@@ -2,6 +2,7 @@
 #include <string>
 #include <QListView>
 #include <QStringListModel>
+#include <QListWidgetItem>
 #include <boost/filesystem/path.hpp>
 
 namespace fs = boost::filesystem;
@@ -17,12 +18,18 @@ signals:
 	void directory_changed(QString const & path);
 
 protected:
+	using base = QListView;
+
 	void dropEvent(QDropEvent * event) override;
 	void dragEnterEvent(QDragEnterEvent * event) override;
 	void dragMoveEvent(QDragMoveEvent * event) override;
+	void mousePressEvent(QMouseEvent * event) override;
+	void mouseMoveEvent(QMouseEvent * event) override;
 	void keyPressEvent(QKeyEvent * event) override;
 
 private:
+	std::vector<QString> selected_items();
+	void performDrag();
 	void dir_up();
 	void dir_enter();
 	void dir_delete();
@@ -40,4 +47,5 @@ private:
 	std::string _root;
 	std::string _remote;  // remote command
 	QStringListModel _model;
+	QPoint _start_drag_pos;
 };

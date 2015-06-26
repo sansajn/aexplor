@@ -7,6 +7,9 @@
 #include <QKeyEvent>
 #include <QUrl>
 #include <QMimeData>
+#include <QListWidgetItem>
+#include <QDrag>
+#include <QApplication>
 #include "mkdir_dialog.hpp"
 
 using std::vector;
@@ -22,20 +25,34 @@ directory_view::directory_view(std::string const & root, std::string const & rem
 	setModel(&_model);
 	dir_change(_root);
 	setAcceptDrops(true);  // drag&drop support
+	setDragEnabled(true);
+	setSelectionMode(ExtendedSelection);
+	setAlternatingRowColors(true);
 }
 
 void directory_view::dragEnterEvent(QDragEnterEvent * event)
 {
-	event->acceptProposedAction();
+	if (event->source() != this)
+	{
+		event->setDropAction(Qt::CopyAction);
+		event->accept();
+	}
+//	event->acceptProposedAction();
 }
 
 void directory_view::dragMoveEvent(QDragMoveEvent * event)
 {
-	event->acceptProposedAction();
+//	event->acceptProposedAction();
 }
 
 void directory_view::dropEvent(QDropEvent * event)
 {
+	if (event->source() == this)
+		return;
+
+	event->setDropAction(Qt::CopyAction);
+	event->accept();
+
 	QMimeData const * mime = event->mimeData();
 
 	if (mime && mime->hasUrls())
@@ -52,6 +69,48 @@ void directory_view::dropEvent(QDropEvent * event)
 	}
 
 	assert(mime && "unknown mime data");
+}
+
+void directory_view::performDrag()
+{
+//	QList<QListWidgetItem *> items = selectedItems();
+	vector<QString> items = selected_items();
+
+	if (items.empty())
+		return;
+
+	QList<QUrl> urls;
+	for (QString & item : items)
+		urls.push_back(QUrl::fromLocalFile(item));
+
+	QMimeData * mime = new QMimeData;
+	mime->setUrls(urls);
+
+	QDrag * drag = new QDrag(this);
+	drag->setMimeData(mime);
+//	drag->setPixmap(QPixmap(":/images/person.png"));
+	if (drag->exec(Qt::CopyAction) == Qt::CopyAction)  // set to Qt::MoveAction to move
+		;
+
+	// TODO: kto uprace drag ??
+}
+
+void directory_view::mousePressEvent(QMouseEvent * event)
+{
+	if (event->button() == Qt::LeftButton)
+		_start_drag_pos = event->pos();
+	base::mousePressEvent(event);
+}
+
+void directory_view::mouseMoveEvent(QMouseEvent * event)
+{
+	if (event->buttons() & Qt::LeftButton)
+	{
+		int distance = (event->pos() - _start_drag_pos).manhattanLength();
+		if (distance >= QApplication::startDragDistance())
+			performDrag();
+	}
+	base::mouseMoveEvent(event);
 }
 
 void directory_view::keyPressEvent(QKeyEvent * event)
@@ -116,6 +175,14 @@ void directory_view::dir_make()
 		mkdir(p.string());
 		update_view();
 	}
+}
+
+std::vector<QString> directory_view::selected_items()
+{
+	vector<QString> items;
+	for (QModelIndex idx : selectionModel()->selection().indexes())
+		items.push_back(idx.data(Qt::DisplayRole).toString());
+	return items;
 }
 
 void directory_view::dir_up()
