@@ -1,9 +1,10 @@
 #include "directory_view.hpp"
+#include <map>
 #include <vector>
 #include <cstdio>
-#include <map>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/regex.hpp>
 #include <QMessageBox>
 #include <QKeyEvent>
 #include <QUrl>
@@ -22,11 +23,11 @@ using boost::trim;
 using boost::starts_with;
 
 static void copy_to_device(vector<string> const & files, string const & dst);
+static file_info parse_ls_line(string const & line);
 
 directory_view::directory_view(std::string const & root, std::string const & remote)
 	: base(nullptr), _root(root), _remote(remote)
 {
-//	setModel(&_model);
 	dir_change(_root);
 	setAcceptDrops(true);  // drag&drop support
 	setDragEnabled(true);
@@ -41,13 +42,10 @@ void directory_view::dragEnterEvent(QDragEnterEvent * event)
 		event->setDropAction(Qt::CopyAction);
 		event->accept();
 	}
-//	event->acceptProposedAction();
 }
 
 void directory_view::dragMoveEvent(QDragMoveEvent * event)
-{
-//	event->acceptProposedAction();
-}
+{}
 
 void directory_view::dropEvent(QDropEvent * event)
 {
@@ -249,19 +247,19 @@ QIcon directory_view::file_icon(string const & path, string const & file)
 
 void directory_view::update_view()
 {
-	QStringList files;
-	ls(_path.string(), files);
+	vector<file_info> files;
+	ls_long(_path.string(), files);
 
-	while (count())  // erase	items
+	while (count())  // erase items
 		delete takeItem(0);
 
 	addItem("..");
 
-	for (QString & file : files)
+	for (file_info & file : files)
 	{
 		QListWidgetItem * item = new QListWidgetItem;
-		item->setText(file);
-		item->setIcon(file_icon(_path.string(), file.toStdString()));
+		item->setText(QString::fromUtf8(file.name.c_str()));
+		item->setIcon(file_icon(_path.string(), file.name));
 		addItem(item);
 	}
 }
@@ -279,6 +277,77 @@ void directory_view::ls(string const & path, QStringList & result) const
 		string line(buf);
 		trim(line);
 		result << QString::fromUtf8(line.c_str());
+	}
+
+	pclose(pin);
+}
+
+file_info parse_ls_line(string const & line)
+{
+	// 'ls -l' output format
+	// drwxr-xr-x root     root              2015-06-23 23:05 acct
+	// -rw-r--r-- root     root          136 1970-01-01 01:00 default.prop
+	static string type_expr = R"((?'type'.))";
+	static string permission_expr = R"((?'permission'(?:[r-][w-][x-]){3}))";
+	static string user_expr = R"((?'user'\w+))";
+	static string group_expr = R"((?'group'\w+))";
+	static string size_expr = R"((?'size'\d+))";  // [optional]
+	static string date_expr = R"((?'date'\d{4}-\d{2}-\d{2} \d{2}:\d{2}))";
+	static string name_expr = R"((?'name'.+))";
+	static string gap = R"(\s+)";
+
+	static string expr = type_expr + permission_expr + gap +
+		user_expr + gap + group_expr + gap + "(?:" + size_expr + gap + ")?" + date_expr + gap + name_expr;
+
+	boost::regex e{expr};
+
+	boost::smatch what;
+	if (boost::regex_match(line, what, e))
+	{
+		char type = what["type"].str()[0];
+
+		file_info fi;
+		fi.name = what["name"];
+		fi.permission = what["permission"];
+		fi.size = std::stoul(what["size"]);
+		fi.directory = type == 'd';
+		fi.link = type == 'l';
+		fi.executable = what["permission"].str().find('x') != string::npos;
+
+		return fi;
+	}
+	else  // unable to match ls line
+	{
+		file_info fi;
+		fi.name = line;
+		return fi;
+	}
+}
+
+/* 'ls -l' output
+	-rwxrw-r--    10    root   root 2048    Jan 13 07:11 afile
+
+	* file permissions,
+	* number of links,
+	* owner name,
+	* owner group,
+	* file size,
+	* time of last modification, and
+	* file/directory name
+*/
+void directory_view::ls_long(std::string const & path, std::vector<file_info> & result) const
+{
+	string cmd = _remote + string(" ls ") + path;
+	FILE * pin = popen(cmd.c_str(), "r");
+	if (!pin)
+		return;
+
+	char buf[1024];
+	while (fgets(buf, sizeof buf, pin))
+	{
+		string line(buf);
+		trim(line);
+		result.push_back(parse_ls_line(line));
 	}
 
 	pclose(pin);

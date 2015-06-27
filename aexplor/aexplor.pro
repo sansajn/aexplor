@@ -25,4 +25,4 @@ HEADERS  += \
     directory_widget.hpp \
     mkdir_dialog.hpp
 
-LIBS += -lboost_system -lboost_filesystem
+LIBS += -lboost_system -lboost_filesystem -lboost_regex

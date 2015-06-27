@@ -1,25 +1,35 @@
 #pragma once
 #include <string>
-#include <QListView>
+#include <boost/filesystem/path.hpp>
 #include <QStringListModel>
 #include <QListWidgetItem>
-#include <boost/filesystem/path.hpp>
 
 namespace fs = boost::filesystem;
+
+
+struct file_info
+{
+	std::string name;
+	std::string permission;
+	size_t size = -1;
+	bool link = false;
+	bool directory = false;
+	bool executable = false;
+};
 
 class directory_view : public QListWidget
 {
 	Q_OBJECT
 
 public:
+	using base = QListWidget;
+
 	directory_view(std::string const & root, std::string const & remote = std::string());
 
 signals:
 	void directory_changed(QString const & path);
 
 protected:
-	using base = QListWidget;
-
 	void dropEvent(QDropEvent * event) override;
 	void dragEnterEvent(QDragEnterEvent * event) override;
 	void dragMoveEvent(QDragMoveEvent * event) override;
@@ -41,6 +51,7 @@ private:
 	bool directory_link(fs::path const & p) const;
 	std::string ls_file(std::string const & path) const;
 	void ls(std::string const & path, QStringList & result) const;
+	void ls_long(std::string const & path, std::vector<file_info> & result) const;
 	void mkdir(std::string const & path) const;
 	QIcon file_icon(std::string const & path, std::string const & file);
 
