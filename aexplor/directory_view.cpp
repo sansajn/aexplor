@@ -204,6 +204,8 @@ QIcon directory_view::file_icon(std::string const & path, file_info const & file
 {
 	if (file.directory)
 		return QIcon::fromTheme("folder");
+	else if (file.executable && !file.link)
+		return QIcon::fromTheme("application-x-executable");
 	else
 		return QIcon::fromTheme("document-new");
 
