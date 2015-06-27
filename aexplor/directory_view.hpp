@@ -50,10 +50,9 @@ private:
 	bool directory(fs::path const & p) const;
 	bool directory_link(fs::path const & p) const;
 	std::string ls_file(std::string const & path) const;
-	void ls(std::string const & path, QStringList & result) const;
 	void ls_long(std::string const & path, std::vector<file_info> & result) const;
 	void mkdir(std::string const & path) const;
-	QIcon file_icon(std::string const & path, std::string const & file);
+	QIcon file_icon(std::string const & path, file_info const & file);
 
 	fs::path _path;
 	std::string _root;

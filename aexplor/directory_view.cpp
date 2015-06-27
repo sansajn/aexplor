@@ -200,8 +200,13 @@ void directory_view::dir_change(fs::path const & p)
 	emit directory_changed(QString::fromUtf8(_path.c_str()));
 }
 
-QIcon directory_view::file_icon(string const & path, string const & file)
+QIcon directory_view::file_icon(std::string const & path, file_info const & file)
 {
+	if (file.directory)
+		return QIcon::fromTheme("folder");
+	else
+		return QIcon::fromTheme("document-new");
+
 //	using icon_map = map<string, QIcon>;
 //	static icon_map icon_cache;
 
@@ -241,8 +246,6 @@ QIcon directory_view::file_icon(string const & path, string const & file)
 //		icon_cache[ext] = icon;
 //		return icon;
 //	}
-
-	return QIcon::fromTheme("document-new");
 }
 
 void directory_view::update_view()
@@ -251,7 +254,12 @@ void directory_view::update_view()
 	ls_long(_path.string(), files);
 
 	while (count())  // erase items
-		delete takeItem(0);
+	{
+		QListWidgetItem * item = takeItem(0);
+		file_info * info = (file_info *)item->data(Qt::UserRole+10).value<void *>();
+		delete info;
+		delete item;
+	}
 
 	addItem("..");
 
@@ -259,27 +267,16 @@ void directory_view::update_view()
 	{
 		QListWidgetItem * item = new QListWidgetItem;
 		item->setText(QString::fromUtf8(file.name.c_str()));
-		item->setIcon(file_icon(_path.string(), file.name));
+		item->setIcon(file_icon(_path.string(), file));
+
+		QVariant v;
+		file_info * info = new file_info;
+		*info = file;
+		v.setValue((void *)info);
+		item->setData(Qt::UserRole+10, v);
+
 		addItem(item);
 	}
-}
-
-void directory_view::ls(string const & path, QStringList & result) const
-{
-	string cmd = _remote + string(" ls ") + path;
-	FILE * pin = popen(cmd.c_str(), "r");
-	if (!pin)
-		return;
-
-	char buf[1024];
-	while (fgets(buf, sizeof buf, pin))
-	{
-		string line(buf);
-		trim(line);
-		result << QString::fromUtf8(line.c_str());
-	}
-
-	pclose(pin);
 }
 
 file_info parse_ls_line(string const & line)
@@ -309,8 +306,9 @@ file_info parse_ls_line(string const & line)
 		file_info fi;
 		fi.name = what["name"];
 		fi.permission = what["permission"];
-		fi.size = std::stoul(what["size"]);
 		fi.directory = type == 'd';
+		if (!fi.directory && what.position("size") > 0)
+			fi.size = std::stoul(what["size"]);
 		fi.link = type == 'l';
 		fi.executable = what["permission"].str().find('x') != string::npos;
 
@@ -337,7 +335,7 @@ file_info parse_ls_line(string const & line)
 */
 void directory_view::ls_long(std::string const & path, std::vector<file_info> & result) const
 {
-	string cmd = _remote + string(" ls ") + path;
+	string cmd = _remote + string(" ls -l ") + path;
 	FILE * pin = popen(cmd.c_str(), "r");
 	if (!pin)
 		return;
