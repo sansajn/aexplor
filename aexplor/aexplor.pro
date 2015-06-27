@@ -4,8 +4,8 @@
 #
 #-------------------------------------------------
 
-QMAKE_CFLAGS += -g
-QMAKE_CXXFLAGS += -std=c++11 -Wall
+QMAKE_CFLAGS += -g -O0 -Wall
+QMAKE_CXXFLAGS += -std=c++11
 
 QT       += core gui
 

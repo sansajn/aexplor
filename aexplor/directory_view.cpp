@@ -1,6 +1,7 @@
 #include "directory_view.hpp"
 #include <vector>
 #include <cstdio>
+#include <map>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <QMessageBox>
@@ -10,19 +11,22 @@
 #include <QListWidgetItem>
 #include <QDrag>
 #include <QApplication>
+#include <QFileIconProvider>
+#include <QFileInfo>
 #include "mkdir_dialog.hpp"
 
 using std::vector;
 using std::string;
+using std::map;
 using boost::trim;
 using boost::starts_with;
 
 static void copy_to_device(vector<string> const & files, string const & dst);
 
 directory_view::directory_view(std::string const & root, std::string const & remote)
-	: QListView(nullptr), _root(root), _remote(remote)
+	: base(nullptr), _root(root), _remote(remote)
 {
-	setModel(&_model);
+//	setModel(&_model);
 	dir_change(_root);
 	setAcceptDrops(true);  // drag&drop support
 	setDragEnabled(true);
@@ -198,12 +202,68 @@ void directory_view::dir_change(fs::path const & p)
 	emit directory_changed(QString::fromUtf8(_path.c_str()));
 }
 
+QIcon directory_view::file_icon(string const & path, string const & file)
+{
+//	using icon_map = map<string, QIcon>;
+//	static icon_map icon_cache;
+
+//	fs::path p{path};
+//	p /= file;
+
+//	if (directory(p))
+//	{
+//		auto icon_it = icon_cache.find("folder");
+//		if (icon_it != icon_cache.end())
+//			return icon_it->second;
+
+//		QIcon icon = QIcon::fromTheme("folder");
+//		icon_cache["folder"] = icon;
+//		return icon;
+//	}
+//	else
+//	{
+//		string ext = p.extension().string();
+//		if (ext.empty())
+//			return QIcon::fromTheme("edit-undo");
+
+//		auto icon_it = icon_cache.find(ext);
+//		if (icon_it != icon_cache.end())
+//			return icon_it->second;
+
+//		// create temporary file
+//		string cmd = string("touch /tmp/qt_.") + ext;
+//		system(cmd.c_str());
+//		QFileInfo finfo{QString("/tmp/qt_.%1").arg(ext.c_str())};
+//		assert(finfo.exists() && "file not found");
+
+//		// find icon from temporary file
+//		static QFileIconProvider icon_prov;
+//		QIcon icon = icon_prov.icon(finfo);
+
+//		icon_cache[ext] = icon;
+//		return icon;
+//	}
+
+	return QIcon::fromTheme("document-new");
+}
+
 void directory_view::update_view()
 {
 	QStringList files;
-	files << "..";
 	ls(_path.string(), files);
-	_model.setStringList(files);
+
+	while (count())  // erase	items
+		delete takeItem(0);
+
+	addItem("..");
+
+	for (QString & file : files)
+	{
+		QListWidgetItem * item = new QListWidgetItem;
+		item->setText(file);
+		item->setIcon(file_icon(_path.string(), file.toStdString()));
+		addItem(item);
+	}
 }
 
 void directory_view::ls(string const & path, QStringList & result) const

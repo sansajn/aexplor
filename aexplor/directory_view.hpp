@@ -7,7 +7,7 @@
 
 namespace fs = boost::filesystem;
 
-class directory_view : public QListView
+class directory_view : public QListWidget
 {
 	Q_OBJECT
 
@@ -18,7 +18,7 @@ signals:
 	void directory_changed(QString const & path);
 
 protected:
-	using base = QListView;
+	using base = QListWidget;
 
 	void dropEvent(QDropEvent * event) override;
 	void dragEnterEvent(QDragEnterEvent * event) override;
@@ -42,10 +42,10 @@ private:
 	std::string ls_file(std::string const & path) const;
 	void ls(std::string const & path, QStringList & result) const;
 	void mkdir(std::string const & path) const;
+	QIcon file_icon(std::string const & path, std::string const & file);
 
 	fs::path _path;
 	std::string _root;
 	std::string _remote;  // remote command
-	QStringListModel _model;
 	QPoint _start_drag_pos;
 };
