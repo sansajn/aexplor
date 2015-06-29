@@ -1,5 +1,4 @@
 #include <string>
-#include <cassert>
 #include <QApplication>
 #include "directory_widget.hpp"
 
@@ -8,18 +7,21 @@ using std::string;
 string const root = "/";
 
 // TODO:
-// * ikony
-// * kopirovanie do pc (drop event dostane cielova aplykacia a ta nevie ako ziskat subory cez adb)
-// * restore position on up-dir
+// * local-search dialog
 // * rename <f2>
+// * lista prikazou (<f7>, <del>, <f2>)
+// * restore position on up-dir
 // * su mode
 // * remount (/system)
 // * permissions, size, date
 // * favorites
 // * view file <f3>
 // * edit file <f4>
+// * kopirovanie do pc (drop event dostane cielova aplykacia a ta nevie ako ziskat subory cez adb)
 // * d&d copy, move context menu
 // * file operations in thread
+// * ok - sort
+// * ok - ikony (directory, executable, ...)
 // * ok - mkdir <f7>
 // * ok - delete <del>
 // * ok - kopirovanie s pc

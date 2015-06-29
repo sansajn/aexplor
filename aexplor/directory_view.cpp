@@ -1,4 +1,5 @@
 #include "directory_view.hpp"
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <cstdio>
@@ -18,12 +19,14 @@
 
 using std::vector;
 using std::string;
+using std::sort;
 using std::map;
 using boost::trim;
 using boost::starts_with;
 
 static void copy_to_device(vector<string> const & files, string const & dst);
 static file_info parse_ls_line(string const & line);
+
 
 directory_view::directory_view(std::string const & root, std::string const & remote)
 	: base(nullptr), _root(root), _remote(remote)
@@ -250,10 +253,21 @@ QIcon directory_view::file_icon(std::string const & path, file_info const & file
 //	}
 }
 
+bool file_compare(file_info const & a, file_info const & b)
+{
+	if (a.directory && !b.directory)
+		return true;
+	else if (!a.directory && b.directory)
+		return false;
+	else
+		return a.name < b.name;
+}
+
 void directory_view::update_view()
 {
 	vector<file_info> files;
 	ls_long(_path.string(), files);
+	sort(begin(files), end(files), file_compare);
 
 	while (count())  // erase items
 	{
