@@ -1,4 +1,5 @@
 #pragma once
+#include <list>
 #include <string>
 #include <boost/filesystem/path.hpp>
 #include <QAbstractListModel>
@@ -6,6 +7,19 @@
 #include <QItemSelection>
 
 namespace fs = boost::filesystem;
+
+struct file_info
+{
+	std::string name;
+	std::string permission;
+	size_t size = -1;
+	bool link = false;
+	bool directory = false;
+	bool executable = false;
+
+	file_info() {}
+	file_info(std::string const & name, bool directory = true) : name{name}, directory{directory} {}
+};
 
 class directory_model : public QAbstractListModel
 {
@@ -34,8 +48,8 @@ signals:
 
 private:
 	void change_directory(fs::path const & path);
-	void rename(QString const & oldval, QString const & newval);
+	void rename(std::string const & oldval, std::string const & newval);
 
 	fs::path _path;
-	QStringList _files;
+	std::list<file_info> _files;
 };

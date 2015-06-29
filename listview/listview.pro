@@ -23,8 +23,7 @@ SOURCES += main.cpp \
 HEADERS  += \
     directory_model.hpp \
     directory_view.hpp \
-    mkdir_dialog.hpp
+    mkdir_dialog.hpp \
+    directory_widget.hpp
 
-LIBS += -lboost_system -lboost_filesystem
-
-FORMS +=
+LIBS += -lboost_system -lboost_filesystem -lboost_regex
