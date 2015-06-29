@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <QListView>
 #include <QKeyEvent>
 #include <QModelIndex>
@@ -13,9 +14,12 @@ public:
 	directory_view();
 
 signals:
+	void go_up();
 	void item_opened(QModelIndex idx);
+	void directory_created(QString local_name);
 
 private:
-	void on_return();
+	std::string current_directory() const;
+	void mkdir_event();
 	void keyPressEvent(QKeyEvent * event) override;
 };

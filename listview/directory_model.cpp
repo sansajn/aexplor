@@ -10,11 +10,22 @@ using boost::trim;
 
 static void ls(fs::path const & path, QStringList & result);
 static void rename(fs::path const & oldname, fs::path const & newname);
+static void mkdir(fs::path const & dir);
 static bool directory(fs::path const & p);
 
 directory_model::directory_model(std::string const & path)
 {
 	change_directory(fs::path{path});
+}
+
+std::string directory_model::path() const
+{
+	return _path.string();
+}
+
+void directory_model::path(std::string const & p)
+{
+	change_directory(fs::path{p});
 }
 
 Qt::ItemFlags directory_model::flags(QModelIndex const & index) const
@@ -55,6 +66,11 @@ bool directory_model::setData(QModelIndex const & index, QVariant const & value,
 	return true;
 }
 
+void directory_model::go_up()
+{
+	change_directory(_path.parent_path());
+}
+
 void directory_model::open_item(QModelIndex idx)
 {
 	if (idx.model() != this)
@@ -71,9 +87,15 @@ void directory_model::open_item(QModelIndex idx)
 		change_directory(p);
 }
 
-void directory_model::go_up()
+void directory_model::make_directory(QString local_name)
 {
-	change_directory(_path.parent_path());
+	fs::path p{_path};
+	p /= local_name.toStdString();
+	mkdir(p);
+
+	beginInsertRows(QModelIndex{}, _files.size(), _files.size());
+	_files << local_name;  // TODO: ak sa mkdir nepodari, nevkladaj
+	endInsertRows();
 }
 
 void directory_model::change_directory(fs::path const & path)
@@ -84,6 +106,7 @@ void directory_model::change_directory(fs::path const & path)
 	_files << "..";
 	ls(_path, _files);
 	endResetModel();
+	emit directory_changed(QString::fromUtf8(_path.c_str()));
 }
 
 void directory_model::rename(QString const & oldval, QString const & newval)
@@ -93,6 +116,12 @@ void directory_model::rename(QString const & oldval, QString const & newval)
 	fs::path newpath{_path};
 	newpath /= newval.toStdString();
 	::rename(oldpath, newpath);
+}
+
+void mkdir(fs::path const & dir)
+{
+	string cmd = string{"mkdir -p "} + dir.string();
+	system(cmd.c_str());
 }
 
 void rename(fs::path const & oldname, fs::path const & newname)
