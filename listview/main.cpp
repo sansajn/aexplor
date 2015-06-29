@@ -6,10 +6,10 @@
 
 /*
 TODO:
-* podpora pre linky (hlavne adresarov)
+* navrat po linku
+* restore position on up-dir
 * ikony (directory, executable, ...)
 * permissions, size, date
-* restore position on up-dir
 * zoznam prikazou ? (mkdir:<f7>, remove:<del>, rename)
 * su mode
 * remount (/system)
@@ -21,6 +21,7 @@ TODO:
 * edit file <f4>
 * file operations in thread
 * d&d copy, move context menu
+* ok - podpora pre linky (hlavne adresarov)
 * ok - sort
 * ok - rename <double-click>
 * ok - mkdir <f7>

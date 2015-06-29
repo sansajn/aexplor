@@ -87,6 +87,21 @@ void directory_model::go_up()
 	change_directory(_path.parent_path());
 }
 
+bool parse_link(string const & name, string & link_name, string & link_to)
+{
+	boost::regex e{R"((?'name'.+)\s->\s(?'to'.+))"};
+
+	boost::smatch what;
+	if (boost::regex_match(name, what, e))
+	{
+		link_name = what["name"];
+		link_to = what["to"];
+		return true;
+	}
+
+	return false;
+}
+
 void directory_model::open_item(QModelIndex index)
 {
 	if (index.model() != this)
@@ -107,6 +122,14 @@ void directory_model::open_item(QModelIndex index)
 	}
 	else if (file_it->link)
 	{
+		string name, to;
+		parse_link(file_it->name, name, to);
+		bool directory = (to.back() == '/');
+		if (directory)
+		{
+			fs::path p{to};
+			change_directory(p);
+		}
 	}
 }
 
