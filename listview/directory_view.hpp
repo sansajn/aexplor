@@ -16,6 +16,7 @@ public:
 signals:
 	void go_up();
 	void item_opened(QModelIndex idx);
+	void item_removed(QItemSelectionModel * selection);
 	void directory_created(QString local_name);
 
 private:

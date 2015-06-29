@@ -26,10 +26,12 @@ void directory_view::keyPressEvent(QKeyEvent * event)
 {
 	if (event->key() == Qt::Key_Return)
 		emit item_opened(selectionModel()->currentIndex());
-	if (event->key() == Qt::Key_Backspace)
+	else if (event->key() == Qt::Key_Backspace)
 		emit go_up();
-	if (event->key() == Qt::Key_F7)
+	else if (event->key() == Qt::Key_F7)
 		mkdir_event();
+	else if (event->key() == Qt::Key_Delete)
+		emit item_removed(selectionModel());
 
 	base::keyPressEvent(event);
 }

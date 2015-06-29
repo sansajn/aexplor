@@ -20,6 +20,7 @@ int main(int argc, char * argv[])
 	QObject::connect(&view, SIGNAL(item_opened(QModelIndex)), &model, SLOT(open_item(QModelIndex)));
 	QObject::connect(&view, SIGNAL(go_up()), &model, SLOT(go_up()));
 	QObject::connect(&view, SIGNAL(directory_created(QString)), &model, SLOT(make_directory(QString)));
+	QObject::connect(&view, SIGNAL(item_removed(QItemSelectionModel*)), &model, SLOT(remove_item(QItemSelectionModel*)));
 
 	QLabel path_lbl{"<current-directory-path>"};
 	QObject::connect(&model, SIGNAL(directory_changed(QString)), &path_lbl, SLOT(setText(QString)));
@@ -28,7 +29,6 @@ int main(int argc, char * argv[])
 	layout.addWidget(&view);
 
 	model.path("~");
-
 
 	w.show();
 

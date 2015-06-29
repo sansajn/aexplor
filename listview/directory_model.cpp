@@ -11,6 +11,7 @@ using boost::trim;
 static void ls(fs::path const & path, QStringList & result);
 static void rename(fs::path const & oldname, fs::path const & newname);
 static void mkdir(fs::path const & dir);
+static void rm(fs::path const & p);
 static bool directory(fs::path const & p);
 
 directory_model::directory_model(std::string const & path)
@@ -71,20 +72,37 @@ void directory_model::go_up()
 	change_directory(_path.parent_path());
 }
 
-void directory_model::open_item(QModelIndex idx)
+void directory_model::open_item(QModelIndex index)
 {
-	if (idx.model() != this)
+	if (index.model() != this)
 		return;
 
-	QString text = idx.data().toString();
+	QString text = index.data().toString();
 	if (text == "..")
 		go_up();
 
 	fs::path p{_path};
-	p /= idx.data().toString().toStdString();
+	p /= index.data().toString().toStdString();
 
 	if (directory(p))
 		change_directory(p);
+}
+
+void directory_model::remove_item(QItemSelectionModel * selection)
+{
+	if (selection->model() != this)
+		return;
+
+	for (QModelIndex & index : selection->selection().indexes())
+	{
+		int row = index.row();
+		beginRemoveRows(QModelIndex{}, row, row);
+		QString name = _files.takeAt(row);
+		fs::path p{_path};
+		p /= name.toStdString();
+		rm(p);
+		endRemoveRows();
+	}
 }
 
 void directory_model::make_directory(QString local_name)
@@ -146,6 +164,12 @@ void ls(fs::path const & path, QStringList & result)
 	}
 
 	pclose(pin);
+}
+
+void rm(fs::path const & p)
+{
+	string cmd = string{"rm -rf "} + p.string();
+	system(cmd.c_str());
 }
 
 bool directory(fs::path const & p)

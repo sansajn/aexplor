@@ -3,6 +3,7 @@
 #include <boost/filesystem/path.hpp>
 #include <QAbstractListModel>
 #include <QStringList>
+#include <QItemSelection>
 
 namespace fs = boost::filesystem;
 
@@ -24,7 +25,8 @@ public:
 
 public slots:
 	void go_up();
-	void open_item(QModelIndex idx);
+	void open_item(QModelIndex index);
+	void remove_item(QItemSelectionModel * selection);
 	void make_directory(QString local_name);
 
 signals:
