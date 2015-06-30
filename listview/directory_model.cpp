@@ -5,9 +5,11 @@
 #include <iterator>
 #include <string>
 #include <cstdio>
+#include <cctype>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
 
+using std::any_of;
 using std::find_if;
 using std::advance;
 using std::distance;
@@ -104,6 +106,10 @@ bool directory_model::setData(QModelIndex const & index, QVariant const & value,
 
 void directory_model::go_up()
 {
+	auto rm_it = _path_history.find(_path);  // odstran ~/temp az ked opustam ~/temp do ~
+	if (rm_it != _path_history.end())
+		_path_history.erase(rm_it);
+
 	fs::path p = _path.parent_path();
 	auto file_it = _path_history.find(p);
 	if (file_it != _path_history.end())
@@ -111,7 +117,6 @@ void directory_model::go_up()
 		file_info & fi = file_it->second;
 		assert(fi.directory && "directory expected");
 		change_directory(p, fi.link);
-		_path_history.erase(file_it);
 	}
 	else
 		change_directory(p);
@@ -211,18 +216,6 @@ void directory_model::rename(string const & oldval, string const & newval)
 	::rename(oldpath, newpath);
 }
 
-void mkdir(fs::path const & dir)
-{
-	string cmd = string{"mkdir -p "} + dir.string();
-	system(cmd.c_str());
-}
-
-void rename(fs::path const & oldname, fs::path const & newname)
-{
-	string cmd = string{"mv "} + oldname.string() + " " + newname.string();
-	system(cmd.c_str());
-}
-
 /* linux 'ls -l' output format
 
 	drwxr-xr-x  2 ja ja      4096 jún 28  2013 Public
@@ -304,9 +297,37 @@ bool parse_link(string const & name, string & link_name, string & link_to)
 	return false;
 }
 
+inline string escaped(fs::path const & p)
+{
+	string path_str = p.string();
+
+	string result;
+	for (auto ch : path_str)
+	{
+		if (isblank(ch))
+			result.push_back('\\');
+
+		result.push_back(ch);
+	}
+
+	return result;
+}
+
+void mkdir(fs::path const & dir)
+{
+	string cmd = string{"mkdir -p "} + escaped(dir);
+	system(cmd.c_str());
+}
+
+void rename(fs::path const & oldname, fs::path const & newname)
+{
+	string cmd = string{"mv "} + escaped(oldname) + " " + escaped(newname);
+	system(cmd.c_str());
+}
+
 void ls(fs::path const & path, list<file_info> & result)
 {
-	string cmd = string{"ls -l "} + path.string();
+	string cmd = string{"ls -l "} + escaped(path);
 	FILE * pin = popen(cmd.c_str(), "r");
 	if (!pin)
 		return;
@@ -326,6 +347,6 @@ void ls(fs::path const & path, list<file_info> & result)
 
 void rm(fs::path const & p)
 {
-	string cmd = string{"rm -rf "} + p.string();
+	string cmd = string{"rm -rf "} + escaped(p);
 	system(cmd.c_str());
 }
