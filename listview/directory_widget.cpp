@@ -22,6 +22,7 @@ directory_widget::directory_widget()
 	connect(&_view, SIGNAL(go_up()), &_model, SLOT(go_up()));
 	connect(&_view, SIGNAL(directory_created(QString)), &_model, SLOT(make_directory(QString)));
 	connect(&_view, SIGNAL(item_removed(QItemSelectionModel*)), &_model, SLOT(remove_item(QItemSelectionModel*)));
+	connect(&_view, SIGNAL(item_dropped(std::vector<std::string>)), &_model, SLOT(drop_item(std::vector<std::string>)));
 
 	_path_label.setText("<current-directory-path>");
 	connect(&_model, SIGNAL(directory_changed(QString, QString)), this, SLOT(change_directory(QString, QString)));

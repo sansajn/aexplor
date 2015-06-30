@@ -3,18 +3,19 @@
 
 /*
 TODO:
-* kopirovanie do pc (drop event dostane cielova aplykacia a ta nevie ako ziskat subory cez adb)
+* [bug] delete file not working (crash)
 * permissions, size, date
 * skoc na novo vytvoreny adresar
 * su mode
 * remount (/system)
 * favorites
-* kopirovanie s pc
 * view file <f3>
 * edit file <f4>
 * file operations in thread
+* kopirovanie do pc (drop event dostane cielova aplykacia a ta nevie ako ziskat subory cez adb)
 * d&d copy, move context menu
 * local-search dialog
+* ok - kopirovanie do zariadenia
 * ok - ikony (directory, executable, ...)
 * ok - zoznam prikazou ? (mkdir:<f7>, remove:<del>, rename)
 * ok - files with spaces

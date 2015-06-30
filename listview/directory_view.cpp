@@ -1,13 +1,25 @@
 #include "directory_view.hpp"
 #include <string>
+#include <vector>
+#include <QKeyEvent>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDragLeaveEvent>
+#include <QMimeData>
+#include <QApplication>
+#include <QDrag>
 #include "directory_model.hpp"
 #include "mkdir_dialog.hpp"
 #include "help_dialog.hpp"
 
 using std::string;
+using std::vector;
 
 directory_view::directory_view()
-{}
+{
+	setAcceptDrops(true);  // drag&drop support
+	setSelectionMode(ExtendedSelection);
+}
 
 string directory_view::current_directory() const
 {
@@ -40,4 +52,39 @@ void directory_view::keyPressEvent(QKeyEvent * event)
 	}
 
 	base::keyPressEvent(event);
+}
+
+void directory_view::dragEnterEvent(QDragEnterEvent * event)
+{
+	if (event->source() != this)
+	{
+		event->setDropAction(Qt::CopyAction);
+		event->accept();
+	}
+}
+
+void directory_view::dragMoveEvent(QDragMoveEvent * event)
+{}
+
+void directory_view::dropEvent(QDropEvent * event)
+{
+	if (event->source() == this)
+		return;
+
+	event->setDropAction(Qt::CopyAction);
+	event->accept();
+
+	QMimeData const * mime = event->mimeData();
+
+	if (mime && mime->hasUrls())
+	{
+		vector<string> files;
+		for (QUrl & url : mime->urls())
+			files.push_back(url.toLocalFile().toStdString());
+
+		if (!files.empty())
+			emit item_dropped(files);
+	}
+
+	assert(mime && "unknown mime data");
 }

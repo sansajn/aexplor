@@ -44,6 +44,7 @@ public slots:
 	void go_up();
 	void open_item(QModelIndex index);
 	void remove_item(QItemSelectionModel * selection);
+	void drop_item(std::vector<std::string> const & files);
 	void make_directory(QString local_name);
 
 signals:

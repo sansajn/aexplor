@@ -19,9 +19,11 @@ using std::string;
 using boost::trim;
 
 static void ls(fs::path const & path, list<file_info> & result);
+static bool ls_file(fs::path const & path, file_info & result);
 static void rename(fs::path const & oldname, fs::path const & newname);
 static void mkdir(fs::path const & dir);
 static void rm(fs::path const & p);
+static void cp(fs::path const & src, fs::path const & dst);
 static bool file_compare(file_info const & a, file_info const & b);
 static bool parse_ls_line(string const & line, file_info & result);
 static bool parse_link(string const & name, string & link_name, string & link_to);
@@ -196,14 +198,32 @@ void directory_model::remove_item(QItemSelectionModel * selection)
 	}
 }
 
+void directory_model::drop_item(std::vector<std::string> const & files)
+{
+	for (string const & file : files)
+	{
+		fs::path src{file};
+
+		cp(src, _path);
+
+		file_info fi;
+		ls_file(_path / src.filename(), fi);
+
+		beginInsertRows(QModelIndex{}, _files.size(), _files.size());
+		_files.push_back(fi);
+		endInsertRows();
+	}
+}
+
 void directory_model::make_directory(QString local_name)
 {
-	fs::path p{_path};
-	p /= local_name.toStdString();
-	mkdir(p);
+	string dirname = local_name.toStdString();
 
+	mkdir(_path / dirname);
+
+	// TODO: vloz adresar na spravnu poziciu, nie na koniec
 	beginInsertRows(QModelIndex{}, _files.size(), _files.size());
-	_files.emplace_back(local_name.toStdString(), true);  // TODO: ak sa mkdir nepodari, nevkladaj
+	_files.emplace_back(dirname, true);  // TODO: ak sa mkdir nepodari, nevkladaj
 	endInsertRows();
 }
 
@@ -370,14 +390,54 @@ void ls(fs::path const & path, list<file_info> & result)
 	char buf[1024];
 	while (fgets(buf, sizeof buf, pin))
 	{
-		string line(buf);
-		trim(line);
+		string line{buf};
+		trim(line);  // TODO: trim znehodnoti filename orezanim
 		file_info fi;
 		if (parse_ls_line(line, fi))
 			result.push_back(fi);
 	}
 
 	pclose(pin);
+}
+
+bool ls_file(fs::path const & path, file_info & result)
+{
+	string cmd = string{"ls -ld "} + escaped(path);
+	FILE * pin = popen(cmd.c_str(), "r");
+	if (!pin)
+		return false;
+
+	char line[1024];
+	char * rv = fgets(line, sizeof line, pin);
+
+	pclose(pin);
+
+	if (!rv)
+		return false;
+
+	if (parse_ls_line(string{line, line + strlen(line)-1}, result))
+	{
+		fs::path p{result.name};  // 'ls -ld' gets absolute file path
+
+		if (result.directory)
+		{
+			fs::path::iterator it = p.end();
+			--it;
+			result.name = it->string();
+		}
+		else
+			result.name = p.filename().string();
+
+		return true;
+	}
+	else
+		return false;
+}
+
+void cp(fs::path const & src, fs::path const & dst)
+{
+	string cmd = string{"cp "} + escaped(src) + " " + escaped(dst);
+	system(cmd.c_str());
 }
 
 void rm(fs::path const & p)
