@@ -28,3 +28,5 @@ HEADERS  += \
     directory_widget.hpp
 
 LIBS += -lboost_system -lboost_filesystem -lboost_regex
+
+FORMS +=

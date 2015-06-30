@@ -3,10 +3,11 @@
 
 /*
 TODO:
-* navrat po linku
+* files with spaces
 * ikony (directory, executable, ...)
 * permissions, size, date
 * zoznam prikazou ? (mkdir:<f7>, remove:<del>, rename)
+* skoc na novo vytvoreny adresar
 * su mode
 * remount (/system)
 * favorites
@@ -17,6 +18,7 @@ TODO:
 * file operations in thread
 * d&d copy, move context menu
 * local-search dialog
+* ok - navrat po linku
 * ok - restore position on up-dir
 * ok - podpora pre linky (hlavne adresarov)
 * ok - sort

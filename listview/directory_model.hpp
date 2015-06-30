@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include <list>
 #include <string>
 #include <boost/filesystem/path.hpp>
@@ -48,9 +49,10 @@ signals:
 	void directory_changed(QString path, QString prev_path);  // TODO: make &
 
 private:
-	void change_directory(fs::path const & path);
+	void change_directory(fs::path const & path, bool link = false);
 	void rename(std::string const & oldval, std::string const & newval);
 
 	fs::path _path;
 	std::list<file_info> _files;
+	std::map<fs::path, file_info> _path_history;
 };

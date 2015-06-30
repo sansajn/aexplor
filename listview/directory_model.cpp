@@ -104,7 +104,17 @@ bool directory_model::setData(QModelIndex const & index, QVariant const & value,
 
 void directory_model::go_up()
 {
-	change_directory(_path.parent_path());
+	fs::path p = _path.parent_path();
+	auto file_it = _path_history.find(p);
+	if (file_it != _path_history.end())
+	{
+		file_info & fi = file_it->second;
+		assert(fi.directory && "directory expected");
+		change_directory(p, fi.link);
+		_path_history.erase(file_it);
+	}
+	else
+		change_directory(p);
 }
 
 void directory_model::open_item(QModelIndex index)
@@ -126,17 +136,13 @@ void directory_model::open_item(QModelIndex index)
 			string name, to;
 			if (parse_link(file_it->name, name, to))
 			{
-				fs::path p{_path};
-				p /= name;
-				change_directory(p);
+				fs::path p = _path / name;
+				_path_history[p] = *file_it;  // save before change
+				change_directory(p, true);
 			}
 		}
 		else // directory
-		{
-			fs::path p{_path};
-			p /= text.toStdString();
-			change_directory(p);
-		}
+			change_directory(_path / text.toStdString());
 	}
 }
 
@@ -152,14 +158,10 @@ void directory_model::remove_item(QItemSelectionModel * selection)
 		list<file_info>::const_iterator file_it = _files.begin();
 		advance(file_it, row);
 
-		fs::path p{_path};
-		p /= file_it->name;
-		rm(p);
+		rm(_path / file_it->name);
 
 		beginRemoveRows(QModelIndex{}, row, row);
-
 		_files.erase(file_it);
-
 		endRemoveRows();
 	}
 }
@@ -185,7 +187,7 @@ bool file_compare(file_info const & a, file_info const & b)
 		return a.name < b.name;
 }
 
-void directory_model::change_directory(fs::path const & path)
+void directory_model::change_directory(fs::path const & path, bool link)
 {
 	fs::path prev_path{_path};
 	_path = path;
@@ -193,7 +195,7 @@ void directory_model::change_directory(fs::path const & path)
 	beginResetModel();
 	_files.clear();
 	_files.emplace_back("..", true);
-	ls(_path, _files);
+	ls(link ? _path / "/" : _path, _files);  // list links as 'ls -l sample/'
 	_files.sort(file_compare);
 	endResetModel();
 
