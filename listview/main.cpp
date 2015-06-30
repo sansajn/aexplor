@@ -3,7 +3,6 @@
 
 /*
 TODO:
-* [bug] delete file not working (crash)
 * permissions, size, date
 * skoc na novo vytvoreny adresar
 * su mode

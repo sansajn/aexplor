@@ -183,19 +183,27 @@ void directory_model::remove_item(QItemSelectionModel * selection)
 	if (selection->model() != this)
 		return;
 
+	QModelIndexList indexes = selection->selection().indexes();
+
+	vector<list<file_info>::const_iterator> remove_iter_list;
+	remove_iter_list.reserve(indexes.size());
+
+	// first, remove from fs
 	for (QModelIndex & index : selection->selection().indexes())
 	{
 		int row = index.row();
 
 		list<file_info>::const_iterator file_it = _files.begin();
 		advance(file_it, row);
+		remove_iter_list.push_back(file_it);
 
 		rm(_path / file_it->name);
-
-		beginRemoveRows(QModelIndex{}, row, row);
-		_files.erase(file_it);
-		endRemoveRows();
 	}
+
+	beginResetModel();
+	for (auto it : remove_iter_list)
+		_files.erase(it);
+	endResetModel();
 }
 
 void directory_model::drop_item(std::vector<std::string> const & files)
