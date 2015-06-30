@@ -31,6 +31,7 @@ public:
 
 	std::string path() const;
 	void path(std::string const & p);
+	QModelIndex find(std::string const & file_name) const;
 
 	Qt::ItemFlags flags(QModelIndex const & index) const override;
 	QVariant data(QModelIndex const & index, int role = Qt::DisplayRole) const override;
@@ -44,7 +45,7 @@ public slots:
 	void make_directory(QString local_name);
 
 signals:
-	void directory_changed(QString);
+	void directory_changed(QString path, QString prev_path);  // TODO: make &
 
 private:
 	void change_directory(fs::path const & path);

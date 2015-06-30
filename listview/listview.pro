@@ -18,7 +18,8 @@ TEMPLATE = app
 SOURCES += main.cpp \
     directory_model.cpp \
     directory_view.cpp \
-    mkdir_dialog.cpp
+    mkdir_dialog.cpp \
+    directory_widget.cpp
 
 HEADERS  += \
     directory_model.hpp \

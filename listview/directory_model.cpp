@@ -1,4 +1,5 @@
 #include "directory_model.hpp"
+#include <algorithm>
 #include <vector>
 #include <list>
 #include <iterator>
@@ -7,7 +8,9 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
 
+using std::find_if;
 using std::advance;
+using std::distance;
 using std::vector;
 using std::list;
 using std::string;
@@ -19,6 +22,7 @@ static void mkdir(fs::path const & dir);
 static void rm(fs::path const & p);
 static bool file_compare(file_info const & a, file_info const & b);
 static bool parse_ls_line(string const & line, file_info & result);
+static bool parse_link(string const & name, string & link_name, string & link_to);
 
 
 directory_model::directory_model(std::string const & path)
@@ -34,6 +38,22 @@ std::string directory_model::path() const
 void directory_model::path(std::string const & p)
 {
 	change_directory(fs::path{p});
+}
+
+struct find_by_name
+{
+	find_by_name(string const & name) : name{name} {}
+	bool operator()(file_info const & fi) const {return fi.name == name;}
+	string name;
+};
+
+QModelIndex directory_model::find(std::string const & file_name) const
+{
+	list<file_info>::const_iterator it = find_if(_files.begin(), _files.end(), find_by_name{file_name});
+	if (it != _files.end())
+		return index(distance(_files.begin(), it));
+	else
+		return QModelIndex{};
 }
 
 Qt::ItemFlags directory_model::flags(QModelIndex const & index) const
@@ -87,21 +107,6 @@ void directory_model::go_up()
 	change_directory(_path.parent_path());
 }
 
-bool parse_link(string const & name, string & link_name, string & link_to)
-{
-	boost::regex e{R"((?'name'.+)\s->\s(?'to'.+))"};
-
-	boost::smatch what;
-	if (boost::regex_match(name, what, e))
-	{
-		link_name = what["name"];
-		link_to = what["to"];
-		return true;
-	}
-
-	return false;
-}
-
 void directory_model::open_item(QModelIndex index)
 {
 	if (index.model() != this)
@@ -116,18 +121,20 @@ void directory_model::open_item(QModelIndex index)
 
 	if (file_it->directory)
 	{
-		fs::path p{_path};
-		p /= text.toStdString();
-		change_directory(p);
-	}
-	else if (file_it->link)
-	{
-		string name, to;
-		parse_link(file_it->name, name, to);
-		bool directory = (to.back() == '/');
-		if (directory)
+		if (file_it->link)  // directory link
 		{
-			fs::path p{to};
+			string name, to;
+			if (parse_link(file_it->name, name, to))
+			{
+				fs::path p{_path};
+				p /= name;
+				change_directory(p);
+			}
+		}
+		else // directory
+		{
+			fs::path p{_path};
+			p /= text.toStdString();
 			change_directory(p);
 		}
 	}
@@ -180,6 +187,7 @@ bool file_compare(file_info const & a, file_info const & b)
 
 void directory_model::change_directory(fs::path const & path)
 {
+	fs::path prev_path{_path};
 	_path = path;
 
 	beginResetModel();
@@ -189,7 +197,7 @@ void directory_model::change_directory(fs::path const & path)
 	_files.sort(file_compare);
 	endResetModel();
 
-	emit directory_changed(QString::fromUtf8(_path.c_str()));
+	emit directory_changed(QString::fromUtf8(_path.c_str()), QString::fromUtf8(prev_path.c_str()));
 }
 
 void directory_model::rename(string const & oldval, string const & newval)
@@ -252,10 +260,13 @@ bool parse_ls_line(string const & line, file_info & result)
 
 		result.name = what["name"];
 		result.permission = what["permission"];
-		result.directory = type == 'd';
 		result.size = std::stoul(what["size"]);
+		result.directory = type == 'd';
 		result.link = type == 'l';
 		result.executable = what["permission"].str().find('x') != string::npos;
+
+		if (result.link && result.name.back() == '/')  // directory-link: source -> data/source/
+			result.directory = true;
 
 		return true;
 	}
@@ -273,6 +284,22 @@ bool parse_ls_line(string const & line, file_info & result)
 	}
 	else
 		return false;  // not a file or directory
+}
+
+bool parse_link(string const & name, string & link_name, string & link_to)
+{
+	// source -> data/source/
+	boost::regex e{R"((?'name'.+)\s->\s(?'to'.+))"};
+
+	boost::smatch what;
+	if (boost::regex_match(name, what, e))
+	{
+		link_name = what["name"];
+		link_to = what["to"];
+		return true;
+	}
+
+	return false;
 }
 
 void ls(fs::path const & path, list<file_info> & result)
