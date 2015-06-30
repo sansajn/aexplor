@@ -6,6 +6,7 @@
 #include <QAbstractListModel>
 #include <QStringList>
 #include <QItemSelection>
+#include <QIcon>
 
 namespace fs = boost::filesystem;
 
@@ -49,10 +50,12 @@ signals:
 	void directory_changed(QString path, QString prev_path);  // TODO: make &
 
 private:
+	QIcon get_icon(std::string const & name) const;
 	void change_directory(fs::path const & path, bool link = false);
 	void rename(std::string const & oldval, std::string const & newval);
 
 	fs::path _path;
 	std::list<file_info> _files;
 	std::map<fs::path, file_info> _path_history;
+	mutable std::map<std::string, QIcon> _icons;
 };

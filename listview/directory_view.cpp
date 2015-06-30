@@ -1,7 +1,8 @@
 #include "directory_view.hpp"
 #include <string>
-#include "mkdir_dialog.hpp"
 #include "directory_model.hpp"
+#include "mkdir_dialog.hpp"
+#include "help_dialog.hpp"
 
 using std::string;
 
@@ -32,6 +33,11 @@ void directory_view::keyPressEvent(QKeyEvent * event)
 		mkdir_event();
 	else if (event->key() == Qt::Key_Delete)
 		emit item_removed(selectionModel());
+	else if (event->key() == Qt::Key_Question)
+	{
+		help_dialog d{this};
+		d.exec();
+	}
 
 	base::keyPressEvent(event);
 }

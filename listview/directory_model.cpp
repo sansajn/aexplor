@@ -65,17 +65,42 @@ Qt::ItemFlags directory_model::flags(QModelIndex const & index) const
 
 QVariant directory_model::data(QModelIndex const & index, int role) const
 {
-	if (role != Qt::DisplayRole && role != Qt::EditRole)
-		return QVariant{};
-
-	if (index.column() == 0 && index.row() < _files.size())
+	switch (role)
 	{
-		list<file_info>::const_iterator it = _files.begin();
-		advance(it, index.row());
-		return QString::fromUtf8(it->name.c_str());
-	}
-	else
-		return QVariant{};
+		case Qt::EditRole:
+		case Qt::DisplayRole:
+		{
+			if (index.column() == 0 && index.row() < _files.size())
+			{
+				list<file_info>::const_iterator it = _files.begin();
+				advance(it, index.row());
+				return QString::fromUtf8(it->name.c_str());
+			}
+			break;
+		}
+
+		case Qt::DecorationRole:
+		{
+			if (index.column() == 0 && index.row() < _files.size())
+			{
+				QVariant result;
+
+				list<file_info>::const_iterator it = _files.begin();
+				advance(it, index.row());
+				if (it->directory)
+					result.setValue(get_icon("folder"));
+				else if (it->executable)
+					result.setValue(get_icon("application-x-executable"));
+				else
+					result.setValue(get_icon("document-new"));
+
+				return result;
+			}
+			break;
+		}
+	}  // switch
+
+	return QVariant{};
 }
 
 int directory_model::rowCount(QModelIndex const & parent) const
@@ -192,6 +217,20 @@ bool file_compare(file_info const & a, file_info const & b)
 		return a.name < b.name;
 }
 
+QIcon directory_model::get_icon(std::string const & name) const
+{
+	auto it = _icons.find(name);
+
+	if (it != _icons.end())
+		return it->second;
+	else
+	{
+		auto ires = _icons.insert(make_pair(name, QIcon::fromTheme(name.c_str())));
+		assert(ires.second && "insertion failed");
+		return ires.first->second;
+	}
+}
+
 void directory_model::change_directory(fs::path const & path, bool link)
 {
 	fs::path prev_path{_path};
@@ -209,11 +248,7 @@ void directory_model::change_directory(fs::path const & path, bool link)
 
 void directory_model::rename(string const & oldval, string const & newval)
 {
-	fs::path oldpath{_path};
-	oldpath /= oldval;
-	fs::path newpath{_path};
-	newpath /= newval;
-	::rename(oldpath, newpath);
+	::rename(_path / oldval, _path / newval);
 }
 
 /* linux 'ls -l' output format

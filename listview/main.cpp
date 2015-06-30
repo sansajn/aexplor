@@ -3,21 +3,21 @@
 
 /*
 TODO:
-* files with spaces
-* ikony (directory, executable, ...)
+* kopirovanie do pc (drop event dostane cielova aplykacia a ta nevie ako ziskat subory cez adb)
 * permissions, size, date
-* zoznam prikazou ? (mkdir:<f7>, remove:<del>, rename)
 * skoc na novo vytvoreny adresar
 * su mode
 * remount (/system)
 * favorites
 * kopirovanie s pc
-* kopirovanie do pc (drop event dostane cielova aplykacia a ta nevie ako ziskat subory cez adb)
 * view file <f3>
 * edit file <f4>
 * file operations in thread
 * d&d copy, move context menu
 * local-search dialog
+* ok - ikony (directory, executable, ...)
+* ok - zoznam prikazou ? (mkdir:<f7>, remove:<del>, rename)
+* ok - files with spaces
 * ok - navrat po linku
 * ok - restore position on up-dir
 * ok - podpora pre linky (hlavne adresarov)

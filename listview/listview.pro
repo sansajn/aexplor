@@ -19,13 +19,15 @@ SOURCES += main.cpp \
     directory_model.cpp \
     directory_view.cpp \
     mkdir_dialog.cpp \
-    directory_widget.cpp
+    directory_widget.cpp \
+    help_dialog.cpp
 
 HEADERS  += \
     directory_model.hpp \
     directory_view.hpp \
     mkdir_dialog.hpp \
-    directory_widget.hpp
+    directory_widget.hpp \
+    help_dialog.hpp
 
 LIBS += -lboost_system -lboost_filesystem -lboost_regex
 

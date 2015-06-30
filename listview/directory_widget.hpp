@@ -15,7 +15,6 @@ public:
 private slots:
 	void change_directory(QString path, QString prev_path);
 
-
 private:
 	directory_view _view;
 	directory_model _model;
