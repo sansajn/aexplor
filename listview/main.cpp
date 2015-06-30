@@ -31,6 +31,7 @@ int main(int argc, char * argv[])
 	QApplication app(argc, argv);
 
 	directory_widget w;
+	w.setMinimumSize(400, 600);
 	w.show();
 
 	return app.exec();
