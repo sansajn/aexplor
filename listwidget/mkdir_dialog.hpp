@@ -3,7 +3,6 @@
 #include <QDialog>
 #include <QLineEdit>
 
-/**/
 class mkdir_dialog : public QDialog
 {
 	Q_OBJECT

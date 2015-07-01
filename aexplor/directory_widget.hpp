@@ -1,21 +1,22 @@
 #pragma once
 #include <QWidget>
 #include <QLabel>
-#include <QPushButton>
+#include <QString>
 #include "directory_view.hpp"
+#include "directory_model.hpp"
 
 class directory_widget : public QWidget
 {
 	Q_OBJECT
 
 public:
-	directory_widget(std::string const & root, QWidget * parent = nullptr);
+	directory_widget();
+
+private slots:
+	void change_directory(QString path, QString prev_path);
 
 private:
-	directory_view * _view;
-	QLabel * _path;
-	QPushButton * _mkdir_btn;
-	QPushButton * _del_btn;
-	QPushButton * _rename_btn;
-	QPushButton * _view_btn;
+	directory_view _view;
+	directory_model _model;
+	QLabel _path_label;
 };
