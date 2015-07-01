@@ -30,7 +30,7 @@ directory_widget::directory_widget()
 	layout->addWidget(&_path_label);
 	layout->addWidget(&_view);
 
-	_model.path("~");
+	_model.path("/");
 }
 
 void directory_widget::change_directory(QString path, QString prev_path)

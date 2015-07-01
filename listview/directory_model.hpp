@@ -23,13 +23,26 @@ struct file_info
 	file_info(std::string const & name, bool directory = true) : name{name}, directory{directory} {}
 };
 
+class abstract_system
+{
+public:
+	virtual ~abstract_system() {}
+	virtual void ls(fs::path const & path, std::list<file_info> & result) = 0;
+	virtual bool ls_file(fs::path const & path, file_info & result) = 0;
+	virtual void cp(fs::path const & src, fs::path const & dst) = 0;
+	virtual void rm(fs::path const & p) = 0;
+	virtual void mkdir(fs::path const & dir) = 0;
+	virtual void rename(fs::path const oldname, fs::path const & newname) = 0;
+};
+
 class directory_model : public QAbstractListModel
 {
 	Q_OBJECT
 
 public:
-	directory_model() {}
+	directory_model();
 	directory_model(std::string const & path);
+	~directory_model();
 
 	std::string path() const;
 	void path(std::string const & p);
@@ -59,4 +72,5 @@ private:
 	std::list<file_info> _files;
 	std::map<fs::path, file_info> _path_history;
 	mutable std::map<std::string, QIcon> _icons;
+	abstract_system * _sys;
 };

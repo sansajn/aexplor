@@ -32,6 +32,7 @@ int main(int argc, char * argv[])
 
 	directory_widget w;
 	w.setMinimumSize(400, 600);
+	w.setWindowTitle("Android explorer");
 	w.show();
 
 	return app.exec();

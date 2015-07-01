@@ -18,20 +18,61 @@ using std::list;
 using std::string;
 using boost::trim;
 
-static void ls(fs::path const & path, list<file_info> & result);
-static bool ls_file(fs::path const & path, file_info & result);
-static void rename(fs::path const & oldname, fs::path const & newname);
-static void mkdir(fs::path const & dir);
-static void rm(fs::path const & p);
-static void cp(fs::path const & src, fs::path const & dst);
-static bool file_compare(file_info const & a, file_info const & b);
-static bool parse_ls_line(string const & line, file_info & result);
+static string escaped(fs::path const & p);
 static bool parse_link(string const & name, string & link_name, string & link_to);
 
+class linux_system : public abstract_system
+{
+public:
+	void ls(fs::path const & path, list<file_info> & result) override;
+	bool ls_file(fs::path const & path, file_info & result) override;
+	void cp(fs::path const & src, fs::path const & dst) override;
+	void rm(fs::path const & p) override;
+	void mkdir(fs::path const & dir) override;
+	void rename(fs::path const oldname, fs::path const & newname) override;
+
+private:
+	bool parse_ls_line(string const & line, file_info & result);
+};
+
+// TODO: zdielaj kod medzi linux a androidom
+class android_system : public abstract_system
+{
+public:
+	android_system(string const & adb) : _adb{adb} {}
+	void ls(fs::path const & path, list<file_info> & result) override;
+	bool ls_file(fs::path const & path, file_info & result) override;
+	void cp(fs::path const & src, fs::path const & dst) override;
+	void rm(fs::path const & p) override;
+	void mkdir(fs::path const & dir) override;
+	void rename(fs::path const oldname, fs::path const & newname) override;
+
+private:
+	bool parse_ls_line(string const & line, file_info & result);
+
+	string _adb;
+};
+
+inline abstract_system * get_system()
+{
+//	return new linux_system{};
+	return new android_system{"/home/ja/opt/android-sdk-linux/platform-tools/adb"};
+}
+
+directory_model::directory_model()
+{
+	_sys = get_system();
+}
 
 directory_model::directory_model(std::string const & path)
 {
+	_sys = get_system();
 	change_directory(fs::path{path});
+}
+
+directory_model::~directory_model()
+{
+	delete _sys;
 }
 
 std::string directory_model::path() const
@@ -197,7 +238,7 @@ void directory_model::remove_item(QItemSelectionModel * selection)
 		advance(file_it, row);
 		remove_iter_list.push_back(file_it);
 
-		rm(_path / file_it->name);
+		_sys->rm(_path / file_it->name);
 	}
 
 	beginResetModel();
@@ -212,10 +253,10 @@ void directory_model::drop_item(std::vector<std::string> const & files)
 	{
 		fs::path src{file};
 
-		cp(src, _path);
+		_sys->cp(src, _path);
 
 		file_info fi;
-		ls_file(_path / src.filename(), fi);
+		_sys->ls_file(_path / src.filename(), fi);
 
 		beginInsertRows(QModelIndex{}, _files.size(), _files.size());
 		_files.push_back(fi);
@@ -227,7 +268,7 @@ void directory_model::make_directory(QString local_name)
 {
 	string dirname = local_name.toStdString();
 
-	mkdir(_path / dirname);
+	_sys->mkdir(_path / dirname);
 
 	// TODO: vloz adresar na spravnu poziciu, nie na koniec
 	beginInsertRows(QModelIndex{}, _files.size(), _files.size());
@@ -267,7 +308,7 @@ void directory_model::change_directory(fs::path const & path, bool link)
 	beginResetModel();
 	_files.clear();
 	_files.emplace_back("..", true);
-	ls(link ? _path / "/" : _path, _files);  // list links as 'ls -l sample/'
+	_sys->ls(link ? _path / "/" : _path, _files);  // list links as 'ls -l sample/'
 	_files.sort(file_compare);
 	endResetModel();
 
@@ -276,7 +317,7 @@ void directory_model::change_directory(fs::path const & path, bool link)
 
 void directory_model::rename(string const & oldval, string const & newval)
 {
-	::rename(_path / oldval, _path / newval);
+	_sys->rename(_path / oldval, _path / newval);
 }
 
 /* linux 'ls -l' output format
@@ -293,7 +334,7 @@ void directory_model::rename(string const & oldval, string const & newval)
 	(6) time of last modification, and
 	(7) file/directory name
 */
-bool parse_ls_line(string const & line, file_info & result)
+bool linux_system::parse_ls_line(string const & line, file_info & result)
 {
 	static string type_expr = R"((?'type'.))";
 	static string permission_expr = R"((?'permission'(?:[r-][w-][x-]){3}))";
@@ -360,7 +401,7 @@ bool parse_link(string const & name, string & link_name, string & link_to)
 	return false;
 }
 
-inline string escaped(fs::path const & p)
+string escaped(fs::path const & p)
 {
 	string path_str = p.string();
 
@@ -376,19 +417,7 @@ inline string escaped(fs::path const & p)
 	return result;
 }
 
-void mkdir(fs::path const & dir)
-{
-	string cmd = string{"mkdir -p "} + escaped(dir);
-	system(cmd.c_str());
-}
-
-void rename(fs::path const & oldname, fs::path const & newname)
-{
-	string cmd = string{"mv "} + escaped(oldname) + " " + escaped(newname);
-	system(cmd.c_str());
-}
-
-void ls(fs::path const & path, list<file_info> & result)
+void linux_system::ls(fs::path const & path, list<file_info> & result)
 {
 	string cmd = string{"ls -l "} + escaped(path);
 	FILE * pin = popen(cmd.c_str(), "r");
@@ -408,7 +437,7 @@ void ls(fs::path const & path, list<file_info> & result)
 	pclose(pin);
 }
 
-bool ls_file(fs::path const & path, file_info & result)
+bool linux_system::ls_file(fs::path const & path, file_info & result)
 {
 	string cmd = string{"ls -ld "} + escaped(path);
 	FILE * pin = popen(cmd.c_str(), "r");
@@ -442,14 +471,144 @@ bool ls_file(fs::path const & path, file_info & result)
 		return false;
 }
 
-void cp(fs::path const & src, fs::path const & dst)
+void linux_system::cp(fs::path const & src, fs::path const & dst)
 {
 	string cmd = string{"cp "} + escaped(src) + " " + escaped(dst);
 	system(cmd.c_str());
 }
 
-void rm(fs::path const & p)
+void linux_system::rm(fs::path const & p)
 {
 	string cmd = string{"rm -rf "} + escaped(p);
 	system(cmd.c_str());
+}
+
+void linux_system::mkdir(fs::path const & dir)
+{
+	string cmd = string{"mkdir -p "} + escaped(dir);
+	system(cmd.c_str());
+}
+
+void linux_system::rename(fs::path const oldname, fs::path const & newname)
+{
+	string cmd = string{"mv "} + escaped(oldname) + " " + escaped(newname);
+	system(cmd.c_str());
+}
+
+void android_system::ls(fs::path const & path, list<file_info> & result)
+{
+	string cmd = _adb + " shell ls -l " + escaped(path);
+	FILE * pin = popen(cmd.c_str(), "r");
+	if (!pin)
+		return;
+
+	char buf[1024];
+	while (fgets(buf, sizeof buf, pin))
+	{
+		string line{buf};
+		trim(line);  // TODO: trim znehodnoti filename orezanim
+		file_info fi;
+		if (parse_ls_line(line, fi))
+			result.push_back(fi);
+	}
+
+	pclose(pin);
+}
+
+bool android_system::ls_file(fs::path const & path, file_info & result)
+{
+	string cmd = _adb + " shell ls -ld " + escaped(path);
+	FILE * pin = popen(cmd.c_str(), "r");
+	if (!pin)
+		return false;
+
+	char line[1024];
+	char * rv = fgets(line, sizeof line, pin);
+
+	pclose(pin);
+
+	if (!rv)
+		return false;
+
+	if (parse_ls_line(string{line, line + strlen(line)-1}, result))
+	{
+		fs::path p{result.name};  // 'ls -ld' gets absolute file path
+
+		if (result.directory)
+		{
+			fs::path::iterator it = p.end();
+			--it;
+			result.name = it->string();
+		}
+		else
+			result.name = p.filename().string();
+
+		return true;
+	}
+	else
+		return false;
+}
+
+void android_system::cp(fs::path const & src, fs::path const & dst)
+{
+	string cmd = _adb + " push " + escaped(src) + " " + escaped(dst);
+	system(cmd.c_str());
+}
+
+void android_system::rm(fs::path const & p)
+{
+	string cmd = _adb + " shell rm -rf " + escaped(p);
+	system(cmd.c_str());
+}
+
+void android_system::mkdir(fs::path const & dir)
+{
+	string cmd = _adb + " shell mkdir -p " + escaped(dir);
+	system(cmd.c_str());
+}
+
+void android_system::rename(fs::path const oldname, fs::path const & newname)
+{
+	string cmd = _adb + " shell mv " + escaped(oldname) + " " + escaped(newname);
+	system(cmd.c_str());
+}
+
+bool android_system::parse_ls_line(string const & line, file_info & result)
+{
+	// 'ls -l' output format
+	// drwxr-xr-x root     root              2015-06-23 23:05 acct
+	// -rw-r--r-- root     root          136 1970-01-01 01:00 default.prop
+	static string type_expr = R"((?'type'.))";
+	static string permission_expr = R"((?'permission'(?:[r-][w-][x-]){3}))";
+	static string user_expr = R"((?'user'\w+))";
+	static string group_expr = R"((?'group'\w+))";
+	static string size_expr = R"((?'size'\d+))";  // [optional]
+	static string date_expr = R"((?'date'\d{4}-\d{2}-\d{2} \d{2}:\d{2}))";
+	static string name_expr = R"((?'name'.+))";
+	static string gap = R"(\s+)";
+
+	static string expr = type_expr + permission_expr + gap +
+		user_expr + gap + group_expr + gap + "(?:" + size_expr + gap + ")?" + date_expr + gap + name_expr;
+
+	boost::regex e{expr};
+
+	boost::smatch what;
+	if (boost::regex_match(line, what, e))
+	{
+		char type = what["type"].str()[0];
+
+		result.name = what["name"];
+		result.permission = what["permission"];
+		result.directory = type == 'd';
+		if (!result.directory && what.position("size") > 0)
+			result.size = std::stoul(what["size"]);
+		result.link = type == 'l';
+		result.executable = what["permission"].str().find('x') != string::npos;
+
+		return true;
+	}
+	else
+		result.name = line;
+
+	return true;  // i want to see also unmatched files
 }
