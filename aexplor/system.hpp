@@ -28,7 +28,8 @@ public:
 	virtual void cp(fs::path const & src, fs::path const & dst) = 0;
 	virtual void rm(fs::path const & p) = 0;
 	virtual void mkdir(fs::path const & dir) = 0;
-	virtual void rename(fs::path const oldname, fs::path const & newname) = 0;
+	virtual void rename(fs::path const & oldname, fs::path const & newname) = 0;
+	virtual std::string cat(fs::path const & file) = 0;
 	virtual std::string const & platform() const = 0;
 
 	virtual void mount_system_as_rw() const {}

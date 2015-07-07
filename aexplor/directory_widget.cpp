@@ -23,6 +23,7 @@ directory_widget::directory_widget()
 	connect(&_view, SIGNAL(directory_created(QString)), &_model, SLOT(make_directory(QString)));
 	connect(&_view, SIGNAL(item_removed(QItemSelectionModel*)), &_model, SLOT(remove_item(QItemSelectionModel*)));
 	connect(&_view, SIGNAL(item_dropped(std::vector<std::string>)), &_model, SLOT(drop_item(std::vector<std::string>)));
+	connect(&_view, SIGNAL(item_viewed(QModelIndex)), &_model, SLOT(view_item(QModelIndex)));
 
 	// model - widget
 	connect(&_model, SIGNAL(current_index_changed(QModelIndex)), this, SLOT(set_current_index(QModelIndex)));

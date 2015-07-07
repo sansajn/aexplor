@@ -3,7 +3,6 @@
 
 /*
 TODO:
-* view text file <f3>
 * permissions, size, date
 * su mode
 * favorites

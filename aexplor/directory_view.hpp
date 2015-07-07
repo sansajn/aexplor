@@ -18,6 +18,7 @@ signals:
 	void item_opened(QModelIndex idx);
 	void item_removed(QItemSelectionModel * selection);
 	void item_dropped(std::vector<std::string> const & files);
+	void item_viewed(QModelIndex idx);
 	void directory_created(QString local_name);
 
 protected:

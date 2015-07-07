@@ -50,6 +50,8 @@ void directory_view::keyPressEvent(QKeyEvent * event)
 		help_dialog d{this};
 		d.exec();
 	}
+	else if (event->key() == Qt::Key_F3)
+		emit item_viewed(selectionModel()->currentIndex());
 
 	base::keyPressEvent(event);
 }

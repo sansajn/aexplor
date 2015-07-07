@@ -10,6 +10,7 @@ help_dialog::help_dialog(QWidget * parent)
 		"Commands:\n"
 		"<del> remove file/directory\n"
 		"<f7> create new directory\n"
+		"<f3> text quick view\n"
 		"<double-click> rename file/directory\n"
 		"<backspace> parent directory\n"
 		"<drag&drop> copy to device\n";

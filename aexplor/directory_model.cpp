@@ -6,6 +6,9 @@
 #include <string>
 #include <cstdio>
 #include <cctype>
+#include <QLabel>
+#include <QDialog>
+#include <QVBoxLayout>
 
 using std::any_of;
 using std::find_if;
@@ -229,6 +232,24 @@ void directory_model::drop_item(std::vector<std::string> const & files)
 	}
 }
 
+void directory_model::view_item(QModelIndex idx)
+{
+	if (!idx.isValid())
+		return;
+
+	file_info fi = get_file(idx.row());
+	string result = _sys->cat(_path / fi.name);
+
+	QDialog d;
+	d.setWindowTitle("quick view");
+	QVBoxLayout * layout = new QVBoxLayout{&d};
+
+	QLabel text{QString::fromUtf8(result.c_str())};
+	layout->addWidget(&text);
+
+	d.exec();
+}
+
 void directory_model::make_directory(QString local_name)
 {
 	string dirname = local_name.toStdString();
@@ -254,6 +275,13 @@ bool file_compare(file_info const & a, file_info const & b)
 		return false;
 	else
 		return a.name < b.name;
+}
+
+file_info & directory_model::get_file(int row)
+{
+	auto it = _files.begin();
+	advance(it, row);
+	return *it;
 }
 
 QIcon directory_model::get_icon(std::string const & name) const

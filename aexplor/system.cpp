@@ -16,7 +16,7 @@ public:
 	void cp(fs::path const & src, fs::path const & dst) override;
 	void rm(fs::path const & p) override;
 	void mkdir(fs::path const & dir) override;
-	void rename(fs::path const oldname, fs::path const & newname) override;
+	void rename(fs::path const & oldname, fs::path const & newname) override;
 	string const & platform() const override;
 
 private:
@@ -32,7 +32,8 @@ public:
 	void cp(fs::path const & src, fs::path const & dst) override;
 	void rm(fs::path const & p) override;
 	void mkdir(fs::path const & dir) override;
-	void rename(fs::path const oldname, fs::path const & newname) override;
+	void rename(fs::path const & oldname, fs::path const & newname) override;
+	string cat(fs::path const & file) override;
 	string const & platform() const override;
 
 	void mount_system_as_rw() const override;
@@ -204,7 +205,7 @@ void linux_system::mkdir(fs::path const & dir)
 	system(cmd.c_str());
 }
 
-void linux_system::rename(fs::path const oldname, fs::path const & newname)
+void linux_system::rename(fs::path const & oldname, fs::path const & newname)
 {
 	string cmd = string{"mv "} + escaped(oldname) + " " + escaped(newname);
 	system(cmd.c_str());
@@ -289,10 +290,29 @@ void android_system::mkdir(fs::path const & dir)
 	system(cmd.c_str());
 }
 
-void android_system::rename(fs::path const oldname, fs::path const & newname)
+void android_system::rename(fs::path const & oldname, fs::path const & newname)
 {
 	string cmd = shell_command(string{"mv "} + escaped(oldname) + " " + escaped(newname), root_needed(oldname));
 	system(cmd.c_str());
+}
+
+string android_system::cat(fs::path const & file)
+{
+	string cmd = shell_command(string{"cat "} + escaped(file), root_needed(file));
+
+	FILE * pin = popen(cmd.c_str(), "r");
+	if (!pin)
+		return string{};
+
+	string result;
+
+	char buf[1024];  // TODO: un-effective
+	while (fgets(buf, sizeof buf, pin))
+		result += buf;
+
+	pclose(pin);
+
+	return result;
 }
 
 string const & android_system::platform() const

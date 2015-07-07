@@ -31,6 +31,7 @@ public slots:
 	void open_item(QModelIndex index);
 	void remove_item(QItemSelectionModel * selection);
 	void drop_item(std::vector<std::string> const & files);
+	void view_item(QModelIndex idx);
 	void make_directory(QString local_name);
 
 signals:
@@ -38,6 +39,7 @@ signals:
 	void current_index_changed(QModelIndex idx);
 
 private:
+	file_info & get_file(int row);
 	QIcon get_icon(std::string const & name) const;
 	void change_directory(fs::path const & path, bool link = false);
 	void rename(std::string const & oldval, std::string const & newval);
