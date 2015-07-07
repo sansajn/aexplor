@@ -45,7 +45,15 @@ void directory_model::path(std::string const & p)
 struct find_by_name
 {
 	find_by_name(string const & name) : name{name} {}
-	bool operator()(file_info const & fi) const {return fi.name == name;}
+
+	bool operator()(file_info const & fi) const
+	{
+		if (fi.link)
+			return fi.name.find(name) == 0;
+		else
+			return fi.name == name;
+	}
+
 	string name;
 };
 
@@ -158,8 +166,6 @@ void directory_model::open_item(QModelIndex index)
 
 	list<file_info>::iterator file_it = _files.begin();
 	advance(file_it, index.row());
-
-	file_info & __info = *file_it;
 
 	if (file_it->directory)
 	{

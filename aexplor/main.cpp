@@ -3,7 +3,6 @@
 
 /*
 TODO:
-* po vstupu do adresar nastav current na ..
 * permissions, size, date
 * skoc na novo vytvoreny adresar
 * su mode

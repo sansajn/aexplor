@@ -37,12 +37,16 @@ void directory_widget::change_directory(QString path, QString prev_path)
 {
 	_path_label.setText(path);
 
-	if (path.size() > prev_path.size())  // vosiel som do adresara, koniec
-		return;
+	QModelIndex idx;
 
-	fs::path relpath = relative_path(fs::path{path.toStdString()}, fs::path{prev_path.toStdString()});
+	if (path.size() > prev_path.size())  // vosiel som do adresara
+		idx = _model.find("..");
+	else  // vychadzam s adresara
+	{
+		fs::path relpath = relative_path(fs::path{path.toStdString()}, fs::path{prev_path.toStdString()});
+		idx = _model.find(relpath.begin()->string());
+	}
 
-	QModelIndex idx = _model.find(relpath.begin()->string());
 	if (idx.isValid())
 		_view.setCurrentIndex(idx);
 }
