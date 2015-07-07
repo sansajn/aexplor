@@ -48,6 +48,8 @@ public:
 	void rename(fs::path const oldname, fs::path const & newname) override;
 
 private:
+	string shell_command(string const & cmd, bool root = false);
+	bool root_needed(fs::path const dirname);
 	bool parse_ls_line(string const & line, file_info & result);
 
 	string _adb;
@@ -497,7 +499,7 @@ void linux_system::rename(fs::path const oldname, fs::path const & newname)
 
 void android_system::ls(fs::path const & path, list<file_info> & result)
 {
-	string cmd = _adb + " shell ls -l " + escaped(path);
+	string cmd = shell_command(string{"ls -l "} + escaped(path), root_needed(path));
 	FILE * pin = popen(cmd.c_str(), "r");
 	if (!pin)
 		return;
@@ -517,7 +519,7 @@ void android_system::ls(fs::path const & path, list<file_info> & result)
 
 bool android_system::ls_file(fs::path const & path, file_info & result)
 {
-	string cmd = _adb + " shell ls -ld " + escaped(path);
+	string cmd = shell_command(string{"ls -ld "} + escaped(path), root_needed(path));
 	FILE * pin = popen(cmd.c_str(), "r");
 	if (!pin)
 		return false;
@@ -551,26 +553,49 @@ bool android_system::ls_file(fs::path const & path, file_info & result)
 
 void android_system::cp(fs::path const & src, fs::path const & dst)
 {
+	// TODO: push to protected dirs ?
 	string cmd = _adb + " push " + escaped(src) + " " + escaped(dst);
 	system(cmd.c_str());
 }
 
 void android_system::rm(fs::path const & p)
 {
-	string cmd = _adb + " shell rm -rf " + escaped(p);
+	string cmd = shell_command(string{"rm -rf "} + escaped(p), root_needed(p));
 	system(cmd.c_str());
 }
 
 void android_system::mkdir(fs::path const & dir)
 {
-	string cmd = _adb + " shell mkdir -p " + escaped(dir);
+	string cmd = shell_command(string{"mkdir -p "} + escaped(dir), root_needed(dir));
 	system(cmd.c_str());
 }
 
 void android_system::rename(fs::path const oldname, fs::path const & newname)
 {
-	string cmd = _adb + " shell mv " + escaped(oldname) + " " + escaped(newname);
+	string cmd = shell_command(string{"mv "} + escaped(oldname) + " " + escaped(newname), root_needed(oldname));
 	system(cmd.c_str());
+}
+
+string android_system::shell_command(string const & cmd, bool root)
+{
+	if (root)
+		return _adb + " shell echo " + cmd + " \\| su";  // example 'adb shell echo ls \| su'
+	else
+		return _adb + " shell " + cmd;
+}
+
+bool android_system::root_needed(fs::path const dirname)
+{
+	// TODO: use permissions instead path
+
+	auto it = dirname.begin();
+	if (*it == fs::path{"/" })
+	{
+		++it;
+		if (*it == fs::path{"system"})
+			return true;
+	}
+	return false;
 }
 
 bool android_system::parse_ls_line(string const & line, file_info & result)
@@ -610,5 +635,5 @@ bool android_system::parse_ls_line(string const & line, file_info & result)
 	else
 		result.name = line;
 
-	return true;  // i want to see also unmatched files
+	return true;  // want to see also unmatched files
 }
