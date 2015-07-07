@@ -35,6 +35,7 @@ public slots:
 
 signals:
 	void directory_changed(QString path, QString prev_path);  // TODO: make &
+	void current_index_changed(QModelIndex idx);
 
 private:
 	QIcon get_icon(std::string const & name) const;

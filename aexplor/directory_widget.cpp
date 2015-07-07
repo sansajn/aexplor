@@ -24,6 +24,9 @@ directory_widget::directory_widget()
 	connect(&_view, SIGNAL(item_removed(QItemSelectionModel*)), &_model, SLOT(remove_item(QItemSelectionModel*)));
 	connect(&_view, SIGNAL(item_dropped(std::vector<std::string>)), &_model, SLOT(drop_item(std::vector<std::string>)));
 
+	// model - widget
+	connect(&_model, SIGNAL(current_index_changed(QModelIndex)), this, SLOT(set_current_index(QModelIndex)));
+
 	_path_label.setText("<current-directory-path>");
 	connect(&_model, SIGNAL(directory_changed(QString, QString)), this, SLOT(change_directory(QString, QString)));
 
@@ -33,22 +36,23 @@ directory_widget::directory_widget()
 	_model.path("/");
 }
 
+void directory_widget::set_current_index(QModelIndex idx)
+{
+	if (idx.isValid())
+		_view.setCurrentIndex(idx);
+}
+
 void directory_widget::change_directory(QString path, QString prev_path)
 {
 	_path_label.setText(path);
 
-	QModelIndex idx;
-
 	if (path.size() > prev_path.size())  // vosiel som do adresara
-		idx = _model.find("..");
+		set_current_index(_model.find(".."));
 	else  // vychadzam s adresara
 	{
 		fs::path relpath = relative_path(fs::path{path.toStdString()}, fs::path{prev_path.toStdString()});
-		idx = _model.find(relpath.begin()->string());
+		set_current_index(_model.find(relpath.begin()->string()));
 	}
-
-	if (idx.isValid())
-		_view.setCurrentIndex(idx);
 }
 
 fs::path relative_path(fs::path const & p1, fs::path const & p2)

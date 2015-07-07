@@ -13,6 +13,7 @@ public:
 	directory_widget();
 
 private slots:
+	void set_current_index(QModelIndex idx);
 	void change_directory(QString path, QString prev_path);
 
 private:

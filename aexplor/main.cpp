@@ -3,11 +3,10 @@
 
 /*
 TODO:
-* skoc na novo vytvoreny adresar
+* view text file <f3>
 * permissions, size, date
 * su mode
 * favorites
-* view file <f3>
 * edit file <f4>
 * kopirovanie do pc (drop event dostane cielova aplykacia a ta nevie ako ziskat subory cez adb)
 * d&d copy, move context menu

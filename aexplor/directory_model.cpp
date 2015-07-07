@@ -11,9 +11,12 @@ using std::any_of;
 using std::find_if;
 using std::advance;
 using std::distance;
+using std::lower_bound;
 using std::vector;
 using std::list;
 using std::string;
+
+static bool file_compare(file_info const & a, file_info const & b);
 
 directory_model::directory_model()
 {
@@ -230,12 +233,17 @@ void directory_model::make_directory(QString local_name)
 {
 	string dirname = local_name.toStdString();
 
-	_sys->mkdir(_path / dirname);
+	_sys->mkdir(_path / dirname);  // TODO: ak sa mkdir nepodari, nevkladaj
 
-	// TODO: vloz adresar na spravnu poziciu, nie na koniec
-	beginInsertRows(QModelIndex{}, _files.size(), _files.size());
-	_files.emplace_back(dirname, true);  // TODO: ak sa mkdir nepodari, nevkladaj
+	file_info item{dirname, true};
+	auto insert_it = lower_bound(_files.begin(), _files.end(), item, file_compare);
+	int row = distance(_files.begin(), insert_it);
+
+	beginInsertRows(QModelIndex{}, row, row);
+	_files.insert(insert_it, item);
 	endInsertRows();
+
+	emit current_index_changed(index(row));
 }
 
 bool file_compare(file_info const & a, file_info const & b)
