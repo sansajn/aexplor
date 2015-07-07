@@ -560,7 +560,7 @@ void android_system::cp(fs::path const & src, fs::path const & dst)
 
 void android_system::rm(fs::path const & p)
 {
-	string cmd = shell_command(string{"rm -rf "} + escaped(p), root_needed(p));
+	string cmd = shell_command(string{"rm -r "} + escaped(p), root_needed(p));
 	system(cmd.c_str());
 }
 
