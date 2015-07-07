@@ -13,11 +13,9 @@ public:
 	main_window();
 
 private slots:
-	void wsys_event(bool);
+	void wsys_click_event(bool);
 
 private:
-	void mount_system_as_rw();
-
 	QPushButton _wsys_btn;
 	directory_widget _dirw;
 };

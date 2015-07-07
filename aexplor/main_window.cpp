@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdlib>
 #include <QVBoxLayout>
+#include "system.hpp"
 
 using std::string;
 
@@ -14,7 +15,8 @@ main_window::main_window()
 	layout->addWidget(&_wsys_btn);
 
 	_wsys_btn.setText("+w /system");
-	connect(&_wsys_btn, SIGNAL(clicked(bool)), this, SLOT(wsys_event(bool)));
+	_wsys_btn.setToolTip("remount /system as read,write");
+	connect(&_wsys_btn, SIGNAL(clicked(bool)), this, SLOT(wsys_click_event(bool)));
 
 	_dirw.setMinimumSize(400, 600);  // TODO: count geometry
 	layout->addWidget(&_dirw);
@@ -22,14 +24,7 @@ main_window::main_window()
 	setCentralWidget(w);
 }
 
-void main_window::wsys_event(bool)
+void main_window::wsys_click_event(bool)
 {
-	mount_system_as_rw();  // TODO: je prostrednik nutny ?
-}
-
-void main_window::mount_system_as_rw()
-{
-	static string adb = "/home/ja/opt/android-sdk-linux/platform-tools/adb";
-	string cmd = adb + R"( shell echo mount -o remount,rw /system /system \| su)";
-	system(cmd.c_str());
+	get_system_impl()->mount_system_as_rw();
 }

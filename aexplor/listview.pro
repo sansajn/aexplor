@@ -21,7 +21,8 @@ SOURCES += main.cpp \
     mkdir_dialog.cpp \
     directory_widget.cpp \
     help_dialog.cpp \
-    main_window.cpp
+    main_window.cpp \
+    system.cpp
 
 HEADERS  += \
     directory_model.hpp \
@@ -29,7 +30,8 @@ HEADERS  += \
     mkdir_dialog.hpp \
     directory_widget.hpp \
     help_dialog.hpp \
-    main_window.hpp
+    main_window.hpp \
+    system.hpp
 
 LIBS += -lboost_system -lboost_filesystem -lboost_regex
 
