@@ -6,6 +6,7 @@ using std::list;
 using std::string;
 using boost::trim;
 
+static string escaped(fs::path const & p);
 
 class linux_system : public abstract_system
 {
@@ -22,8 +23,7 @@ private:
 	bool parse_ls_line(string const & line, file_info & result);
 };
 
-// TODO: zdielaj kod medzi linux a androidom
-class android_system : public abstract_system
+class android_system : public abstract_system  // TODO: zdielaj kod medzi linux a androidom
 {
 public:
 	android_system(string const & adb) : _adb{adb} {}
@@ -52,7 +52,20 @@ abstract_system * get_system_impl()
 	return &sys;
 }
 
-static string escaped(fs::path const & p);
+bool abstract_system::parse_link(string const & name, string & link_name, string & link_to)
+{
+	boost::regex e{R"((?'name'.+)\s->\s(?'to'.+))"};  // source -> data/source/
+
+	boost::smatch what;
+	if (boost::regex_match(name, what, e))
+	{
+		link_name = what["name"];
+		link_to = what["to"];
+		return true;
+	}
+
+	return false;
+}
 
 /* linux 'ls -l' output format
 
@@ -316,22 +329,6 @@ bool android_system::root_needed(fs::path const dirname)
 	return false;
 }
 
-static bool parse_link(string const & name, string & link_name, string & link_to)
-{
-	// source -> data/source/
-	boost::regex e{R"((?'name'.+)\s->\s(?'to'.+))"};
-
-	boost::smatch what;
-	if (boost::regex_match(name, what, e))
-	{
-		link_name = what["name"];
-		link_to = what["to"];
-		return true;
-	}
-
-	return false;
-}
-
 static string strip_newline(string const & s)
 {
 	string::const_iterator it = s.end();
@@ -384,7 +381,7 @@ bool android_system::parse_ls_line(string const & line, file_info & result)
 		if (result.link)  // if it is link look for target
 		{
 			string name, to;
-			if (parse_link(result.name, name, to))  // TODO: handle link to link
+			if (parse_link(result.name, name, to))
 			{
 				file_info fi;
 				ls_file(to, fi);

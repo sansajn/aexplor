@@ -3,8 +3,8 @@
 
 /*
 TODO:
-* permissions, size, date
 * skoc na novo vytvoreny adresar
+* permissions, size, date
 * su mode
 * favorites
 * view file <f3>

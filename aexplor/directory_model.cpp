@@ -6,7 +6,6 @@
 #include <string>
 #include <cstdio>
 #include <cctype>
-#include <boost/regex.hpp>
 
 using std::any_of;
 using std::find_if;
@@ -15,8 +14,6 @@ using std::distance;
 using std::vector;
 using std::list;
 using std::string;
-
-static bool parse_link(string const & name, string & link_name, string & link_to);
 
 directory_model::directory_model()
 {
@@ -172,7 +169,7 @@ void directory_model::open_item(QModelIndex index)
 		if (file_it->link)  // directory link
 		{
 			string name, to;
-			if (parse_link(file_it->name, name, to))
+			if (_sys->parse_link(file_it->name, name, to))
 			{
 				fs::path p = _path / name;
 				_path_history[p] = *file_it;  // save before change
@@ -283,20 +280,4 @@ void directory_model::change_directory(fs::path const & path, bool link)
 void directory_model::rename(string const & oldval, string const & newval)
 {
 	_sys->rename(_path / oldval, _path / newval);
-}
-
-bool parse_link(string const & name, string & link_name, string & link_to)
-{
-	// source -> data/source/
-	boost::regex e{R"((?'name'.+)\s->\s(?'to'.+))"};
-
-	boost::smatch what;
-	if (boost::regex_match(name, what, e))
-	{
-		link_name = what["name"];
-		link_to = what["to"];
-		return true;
-	}
-
-	return false;
 }

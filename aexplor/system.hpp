@@ -32,6 +32,8 @@ public:
 	virtual std::string const & platform() const = 0;
 
 	virtual void mount_system_as_rw() const {}
+
+	virtual bool parse_link(std::string const & name, std::string & link_name, std::string & link_to);
 };
 
 abstract_system * get_system_impl();
